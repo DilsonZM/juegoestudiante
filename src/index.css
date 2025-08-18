@@ -368,3 +368,86 @@ html, body { overflow-x: hidden; }
     margin-bottom: 0;
   }
 }
+
+
+/** * Fin del CSS
+ * Aquí termina el CSS de la página de login/registro.
+ * Asegúrate de que no haya reglas sobrantes o duplicadas.
+ */
+
+ /* ===== Header base (desktop por defecto) ===== */
+.app-header{
+  max-width:1024px;
+  margin:0 auto 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+.brand-title{ display:flex; align-items:center; gap:12px; }
+.app-emoji{ font-size:2.3rem; line-height:1; display:block; }
+.app-title{ font-size: clamp(1.6rem, 4vw, 2rem); margin:0; line-height:1; }
+
+.user-strip{
+  display:flex; align-items:center; gap:6px;
+  font-size:14px; opacity:.85;
+}
+.user-label{ opacity:.85; }
+.user-email{ font-weight:700; }
+.logout-icon{
+  background: linear-gradient(90deg, var(--brand), var(--brand-2));
+  color:#08211f; border:1px solid var(--stroke);
+  border-radius:8px; padding:4px 8px; display:inline-flex; align-items:center;
+  box-shadow: 0 8px 20px rgba(0,0,0,.18); cursor:pointer; margin-left:8px;
+}
+.logout-icon svg{ display:block; }
+
+.ga-strip{ display:flex; align-items:center; gap:10px; }
+.ga-title{ font-weight:700; letter-spacing:.4px; font-size:14px; }
+.ga-badge img{ height:32px; border-radius:8px; display:block; }
+
+/* ===== Móvil: reflujo y truncado del email ===== */
+@media (max-width: 680px){
+  .app-header{
+    display:grid;
+    grid-template-columns: 1fr auto; /* espacio para icono salir si quisieras moverlo */
+    row-gap:6px;
+    align-items:center;
+    margin: 0 12px 12px; /* un pelín de respiro lateral */
+  }
+  .brand-title{ grid-column: 1 / -1; }
+  .app-title{ font-size: clamp(1.6rem, 7vw, 2rem); }
+
+  /* “Conectado como <email>  [botón]” en una franja limpia */
+  .user-strip{
+    grid-column: 1 / -1;
+    display:grid;
+    grid-template-columns:auto 1fr auto; /* label | email | botón */
+    align-items:center;
+    column-gap:8px;
+    font-size:13px;
+    opacity:1;
+  }
+  .user-email{
+    max-width: 55vw;            /* <- evita romper el layout */
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    display:block;
+  }
+  .logout-icon{
+    padding:6px; border-radius:8px;
+    background: rgba(255,255,255,.06);
+    border:1px solid var(--stroke);
+    color:var(--text);
+    box-shadow:none;
+  }
+
+  /* Cuando no hay sesión, la franja de GA se compacta */
+  .ga-strip{
+    grid-column:1 / -1;
+    justify-content:space-between;
+  }
+  .ga-title{ font-size:12px; line-height:1.1; }
+  .ga-badge img{ height:28px; }
+}

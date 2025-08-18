@@ -680,48 +680,41 @@ export default function App(){
 
   return (
     <div style={{minHeight:'100vh',background:'#0b0b0b',color:'#eaeaea',padding:16,fontFamily:'system-ui, sans-serif'}}>
-      <header style={{maxWidth:1024,margin:'0 auto 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div style={{display:'flex',alignItems:'center',gap:12}}>
-          <span style={{fontSize:'2.3rem',lineHeight:1,display:'block'}}>🎡</span>
-          <h1 className="app-title" style={{margin:0}}>Ruleta de Datos</h1>
+      
+    <header className="app-header">
+      <div className="brand-title">
+        <span className="app-emoji" aria-hidden>🎡</span>
+        <h1 className="app-title">Ruleta de Datos</h1>
+      </div>
+
+      {user ? (
+        <div className="user-strip">
+          <span className="user-label">Conectado como</span>
+          <b className="user-email">{user.email}</b>
+          <button
+            onClick={salir}
+            className="logout-icon"
+            title="Salir"
+            aria-label="Salir"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         </div>
-        <div style={{fontSize:14,opacity:.85}}>
-          {user ? (
-            <>Conectado como <b>{user.email}</b> ·
-              <button
-                onClick={salir}
-                style={{
-                  background: 'linear-gradient(90deg, var(--brand), var(--brand-2))',
-                  color: '#08211f',
-                  border: '1px solid var(--stroke)',
-                  borderRadius: 8,
-                  padding: '4px 8px',
-                  fontSize: 16,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  boxShadow: '0 8px 20px rgba(0,0,0,.18)',
-                  cursor: 'pointer',
-                  marginLeft: 8
-                }}
-                title="Salir"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:2}}>
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-              </button>
-            </>
-          ) : (
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <span style={{fontWeight:700,letterSpacing:0.5,fontSize:15,display:'inline-block'}}>ACTIVIDAD GOOGLE ANALYTICS</span>
-              <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer">
-                <img src={unirLogo} alt="UNIR" style={{height:32,marginLeft:6,borderRadius:8,verticalAlign:'middle',cursor:'pointer'}} />
-              </a>
-            </div>
-          )}
+      ) : (
+        <div className="ga-strip">
+          <span className="ga-title">ACTIVIDAD GOOGLE ANALYTICS</span>
+          <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer" className="ga-badge">
+            <img src={unirLogo} alt="UNIR" />
+          </a>
         </div>
-      </header>
+      )}
+    </header>
+
 
       <main style={{maxWidth:1200,margin:'0 auto'}}>
         {!user && (
