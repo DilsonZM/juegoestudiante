@@ -125,9 +125,23 @@ function AuthPanel({ auth, db, onReady }) {
   const doRegister = async () => {
     setLoading(true); setError('')
     try {
+      // --- validación mínima antes de tocar Firebase ---
+      const name = (displayName || '').trim()
+      if (!name) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Falta tu nombre',
+          text: 'Por favor escribe tu primer nombre antes de registrarte.',
+          confirmButtonColor: '#1dd1c6',
+          background: '#131a3a',
+          color: '#e8ecf4'
+        })
+        return
+      }
+
       const cred = await createUserWithEmailAndPassword(auth, email, password)
-      await updateProfile(cred.user, { displayName })
-      await saveProfile(cred.user.uid, { displayName, gender, city })
+      await updateProfile(cred.user, { displayName: name })
+      await saveProfile(cred.user.uid, { displayName: name, gender, city })
       onReady?.()
     } catch (e) {
       showErrorSwal(getFirebaseErrorMsg(e))
@@ -209,7 +223,16 @@ function AuthPanel({ auth, db, onReady }) {
 
       <form
         className="form"
-        onSubmit={(e) => { e.preventDefault(); action(); }}
+
+        onSubmit={(e) => {
+          e.preventDefault()
+          const form = e.currentTarget
+          if (!form.checkValidity()) {
+            form.reportValidity()   // muestra las burbujas nativas
+            return
+          }
+          action()
+        }}
         noValidate
         style={{ marginTop: 12 }}
       >
