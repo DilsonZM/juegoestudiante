@@ -11,7 +11,7 @@ import {
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp,
   collection, addDoc, query, orderBy, limit, getDocs, runTransaction,
-  onSnapshot, getCountFromServer, where
+  onSnapshot, getCountFromServer, documentId , where 
 } from 'firebase/firestore'
 import './index.css'
 import unirLogo from './assets/unir.png'
@@ -146,7 +146,14 @@ async function submitSpinAndAccumulate(db, uid, displayName, result){
 }
 
 async function fetchLeaderboard(db){
-  const qTop = query(collection(db,'userstats'), orderBy('totalScore','desc'), limit(10))
+  const qTop = query(
+    collection(db, 'userstats'),
+    orderBy('totalScore', 'desc'), // 1) más puntaje
+    orderBy('totalSpins', 'asc'),  // 2) menos giros
+    orderBy('updatedAt', 'asc'),   // 3) más antiguo primero
+    orderBy(documentId(), 'asc'),  // 4) desempate estable final
+    limit(10)
+  )
   const snap = await getDocs(qTop)
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
