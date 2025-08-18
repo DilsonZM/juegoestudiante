@@ -342,3 +342,29 @@ html, body { overflow-x: hidden; }
     padding: 6px 8px;
   }
 }
+
+/* --------- Final del CSS --------- */
+/* ===== Desktop: auth-card pegado y separación bajo el título ===== */
+@media (min-width: 981px) {
+  /* separa el grid (aside + login) del título */
+  .auth-shell {
+    margin-top: 24px;          /* ajusta 20–32px a gusto */
+  }
+
+  /* quita padding vertical de .auth-main, deja el horizontal */
+  .auth-main {
+    display: grid;
+    align-items: start;         /* no centrar vertical */
+    justify-items: center;
+    padding-top: 0 !important;  /* <- clave */
+    padding-bottom: 0 !important;
+    /* conservamos padding-left/right que ya tienes (20px) */
+  }
+
+  /* asegura que el card no se separe dentro de .auth-main */
+  .auth-main .auth-card {
+    align-self: start;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
