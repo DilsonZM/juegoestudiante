@@ -1,6 +1,7 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
+    <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4YC7ZJPC9J"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -10,10 +11,36 @@
     </script>
 
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/src/assets/icono.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Ruleta UNIR</title>
+    <meta name="description" content="Ruleta para decisiones de Gobierno del Dato.">
+
+    <!-- Favicon (usa archivos en /public) -->
+    <link rel="icon" type="image/png" href="icono.png" />
+    <!-- Opcionales:
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icono-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="icono-16.png" />
+    -->
+
+    <!-- Open Graph (para previews en WhatsApp/FB/Telegram) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dilsonzm.github.io/juegoestudiante/">
+    <meta property="og:title" content="Ruleta UNIR">
+    <meta property="og:description" content="Ruleta para decisiones de Gobierno del Dato.">
+    <meta property="og:image" content="https://dilsonzm.github.io/juegoestudiante/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Ruleta UNIR">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Ruleta UNIR">
+    <meta name="twitter:description" content="Ruleta para decisiones de Gobierno del Dato.">
+    <meta name="twitter:image" content="https://dilsonzm.github.io/juegoestudiante/og-image.png">
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
