@@ -5,7 +5,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { initializeApp, getApps } from 'firebase/app'
 import {
   getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
-  signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile
+  signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile,
+  // 👇 Google Sign-In
+  GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult
 } from 'firebase/auth'
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp,
@@ -74,7 +76,7 @@ function Modal({ open, title, onClose, children }) {
           <button
             onClick={onClose}
             className="btn btn-sm"
-            style={{marginLeft:'auto',borderRadius:8,border:'1px solid #3f3f46',background:'#18181b',color:'#fafafa',padding:'6px 10px'}}
+            style={{marginLeft:'auto',borderRadius:8,border:'1px solid var(--stroke)',background:'rgba(255,255,255,.06)',color:'var(--text)',padding:'6px 10px'}}
           >Cerrar</button>
         </div>
         <div style={{padding:12}}>
@@ -103,7 +105,7 @@ const Eye = (
 )
 const EyeOff = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden style={{fill:'#888',stroke:'#888'}}>
-    <path d="M2 5l2-2 17 17-2 2-3.1-3.1A11.8 11.8 0 0112 19C5 19 2 12 2 12a20.9 20.9 0 013.7-5.6L2 5zm8.6 3.2L8.7 6.3A4.9 4.9 0 007 10a5 5 0 007 4.7l-1.8-1.8A3 3 0 009 10c0-.6.2-1.2.6-1.8zM12 5c2.2 0 4 .6 5.7 1.7A17.6 17.6 0 0122 12s-3 7-10 7c-.9 0-1.7-.1-2.5-.3l2.3-2.3c.1 0 .1 0 .2.1A5 5 0 0017 10a4.8 4.8 0 00-.4-2l1.6-1.6A13.3 13.3 0 0012 5z" />
+    <path d="M2 5l2-2 17 17-2 2-3.1-3.1A11.8 11.8 0 0112 19C5 19 2 12 2 12a20.9 20.9 0 013.7-5.6L2 5zm8.6 3.2L8.7 6.3A4.9 4.9 0 007 10a5 5 0 007 4.7l-1.8-1.8A3 3 0 009 10c0-.6.2-1.2.6-1.8zM12 5c2.2 0 4 .6 5.7 1.7A17.6 17.6 0 0122 12s-3 7-10 7c-.9 0-1.7-.1-2.5-.3l 2.3-2.3c.1 0 .1 0 .2.1A5 5 0 0017 10a4.8 4.8 0 00-.4-2l1.6-1.6A13.3 13.3 0 0012 5z" />
   </svg>
 )
 
@@ -122,10 +124,76 @@ function AuthPanel({ auth, db, onReady }) {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
   }
 
+  // ⏪ Manejar retorno de redirect (móvil / popup bloqueado)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await getRedirectResult(auth)
+        if (res?.user) {
+          const u = res.user
+          await saveProfile(u.uid, {
+            displayName: u.displayName || u.email,
+            gender: 'X',
+            city: 'N/A',
+            provider: 'google',
+            photoURL: u.photoURL || null,
+            createdAt: serverTimestamp(),
+          })
+          onReady?.()
+        }
+      } catch (e) {
+        showErrorSwal(getFirebaseErrorMsg(e))
+      }
+    })()
+  }, [auth]) // eslint OK
+
+  const doGoogleLogin = async () => {
+    setLoading(true); setError('')
+    try {
+      const provider = new GoogleAuthProvider()
+      provider.setCustomParameters({ prompt: 'select_account' })
+
+      let result
+      try {
+        result = await signInWithPopup(auth, provider)   // desktop
+      } catch (e) {
+        if (e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user') {
+          await signInWithRedirect(auth, provider)       // móvil / bloqueo
+          return
+        }
+        throw e
+      }
+
+      const u = result.user
+      await saveProfile(u.uid, {
+        displayName: u.displayName || u.email,
+        gender: 'X',
+        city: 'N/A',
+        provider: 'google',
+        photoURL: u.photoURL || null,
+        createdAt: serverTimestamp(),
+      })
+      onReady?.()
+    } catch (e) {
+      if (e?.code === 'auth/account-exists-with-different-credential') {
+        await Swal.fire({
+          icon:'warning',
+          title:'Ya existe una cuenta con ese correo',
+          text:'Ingresa con el método original (correo/contraseña) y podrás vincular Google luego.',
+          confirmButtonColor:'#1dd1c6', background:'#131a3a', color:'#e8ecf4'
+        })
+      } else {
+        showErrorSwal(getFirebaseErrorMsg(e))
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const doRegister = async () => {
     setLoading(true); setError('')
     try {
-      // --- validación mínima antes de tocar Firebase ---
+      // Validación previa
       const name = (displayName || '').trim()
       if (!name) {
         await Swal.fire({
@@ -138,7 +206,6 @@ function AuthPanel({ auth, db, onReady }) {
         })
         return
       }
-
       const cred = await createUserWithEmailAndPassword(auth, email, password)
       await updateProfile(cred.user, { displayName: name })
       await saveProfile(cred.user.uid, { displayName: name, gender, city })
@@ -223,12 +290,11 @@ function AuthPanel({ auth, db, onReady }) {
 
       <form
         className="form"
-
         onSubmit={(e) => {
           e.preventDefault()
           const form = e.currentTarget
           if (!form.checkValidity()) {
-            form.reportValidity()   // muestra las burbujas nativas
+            form.reportValidity()
             return
           }
           action()
@@ -295,6 +361,7 @@ function AuthPanel({ auth, db, onReady }) {
                 title="Solo tu primer nombre, sin espacios"
               />
             </div>
+
             <div className="field">
               <label htmlFor="city">Ciudad</label>
               <input
@@ -313,7 +380,7 @@ function AuthPanel({ auth, db, onReady }) {
                   display: 'flex',
                   gap: 10,
                   rowGap: 6,
-                  flexWrap: 'wrap',              // 👈 permite saltar a 2-3 filas en móvil
+                  flexWrap: 'wrap',
                   background: 'rgba(255,255,255,.08)',
                   borderRadius: 12,
                   padding: '4px 6px',
@@ -330,17 +397,17 @@ function AuthPanel({ auth, db, onReady }) {
                     color: gender==='M' ? '#08211f' : 'var(--text)',
                     border: 'none',
                     borderRadius: 8,
-                    padding: '6px 10px',         // 👈 un pelín menor
+                    padding: '6px 10px',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     boxShadow: gender==='M' ? '0 4px 12px rgba(0,0,0,.10)' : 'none',
-                    fontSize: 14,                // 👈 baja en móvil
+                    fontSize: 14,
                     lineHeight: 1.2,
-                    whiteSpace: 'normal',        // 👈 permite partir “Prefiero…”
+                    whiteSpace: 'normal',
                     minWidth: 0,
-                    flex: '1 1 120px'            // 👈 base flexible: no se desborda
+                    flex: '1 1 120px'
                   }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:5}}><circle cx="12" cy="12" r="10"/><path d="M16 8v-4h-4"/><line x1="16" y1="8" x2="21" y2="3"/></svg>
@@ -398,8 +465,6 @@ function AuthPanel({ auth, db, onReady }) {
                 </button>
               </div>
             </div>
-
-
           </>
         )}
 
@@ -407,17 +472,36 @@ function AuthPanel({ auth, db, onReady }) {
           {loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : mode === 'register' ? 'Crear cuenta' : 'Enviar correo'}
         </button>
 
+        {/* Separador + botón Google SOLO en modo login */}
         {mode === 'login' && (
-          <p className="muted center mt-16">
-            ¿No tienes cuenta?{' '}
-            <a className="link" href="#" onClick={(ev) => { ev.preventDefault(); setMode('register') }}>
-              Crear cuenta
-            </a>
-            {' '}·{' '}
-            <a className="link" href="#" onClick={(ev) => { ev.preventDefault(); setMode('reset') }}>
-              ¿Olvidaste tu contraseña?
-            </a>
-          </p>
+          <>
+            <div style={{display:'flex',alignItems:'center',gap:8,margin:'12px 0'}}>
+              <span style={{flex:1,height:1,background:'var(--stroke)'}} />
+              <span style={{opacity:.7,fontSize:13}}>o</span>
+              <span style={{flex:1,height:1,background:'var(--stroke)'}} />
+            </div>
+            <button
+              type="button"
+              onClick={doGoogleLogin}
+              disabled={loading}
+              style={{
+                width:'100%', height:44, borderRadius:12,
+                border:'1px solid var(--stroke)', background:'rgba(255,255,255,.06)',
+                color:'var(--text)', fontWeight:700, cursor:'pointer'
+              }}
+              title="Continuar con Google"
+            >
+              <span style={{display:'inline-flex',alignItems:'center',gap:8}}>
+                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
+                  <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 31.9 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.4 1.1 7.4 2.9l5.7-5.7C33.5 7.1 28.9 5 24 5 12.9 5 4 13.9 4 25s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.7z"/>
+                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.1 16.2 18.6 13 24 13c2.8 0 5.4 1.1 7.4 2.9l5.7-5.7C33.5 7.1 28.9 5 24 5c-7.7 0-14.3 4.3-17.7 10.7z"/>
+                  <path fill="#4CAF50" d="M24 45c4.9 0 9.4-1.9 12.7-5l-5.9-4.9C29 36.5 26.6 37 24 37c-5.2 0-9.6-3.1-11.5-7.5l-6.5 5.1C8.5 40.5 15.7 45 24 45z"/>
+                  <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.1-3.4 5.6-6.3 7.1l.1.1 5.9 4.9c-.4.4 7-4.9 7-15.1 0-1.3-.1-2.5-.4-3.7z"/>
+                </svg>
+                Continuar con Google
+              </span>
+            </button>
+          </>
         )}
       </form>
     </section>
@@ -614,8 +698,7 @@ function Wheel({ onResult }) {
         ))}
       </div>
 
-
-      <div className="wheel-wrap">
+      <div className="wheel-wrap" style={{ position:'relative' }}>
         <div style={{
           position:'absolute', left:'50%', top:-8, transform:'translateX(-50%)',
           width:0, height:0, borderLeft:'12px solid transparent', borderRight:'12px solid transparent',
@@ -631,13 +714,13 @@ function Wheel({ onResult }) {
           }}
         >
           {SEGMENTS.map((s, i) => {
-            const startAngle = i * (360 / SEGMENTS.length)
-            const endAngle = startAngle + (360 / SEGMENTS.length)
+            const startAngle = i * segAngle
+            const endAngle = startAngle + segAngle
             const largeArc = endAngle - startAngle <= 180 ? 0 : 1
             const start = polarToCartesian(50, 50, 49, endAngle)
             const end = polarToCartesian(50, 50, 49, startAngle)
             const d = [`M 50 50`,`L ${start.x} ${start.y}`,`A 49 49 0 ${largeArc} 0 ${end.x} ${end.y}`,`Z`].join(' ')
-            const mid = midPointOnArc(50, 50, RAD_TEXT + 1.5, startAngle + (360 / SEGMENTS.length)/2)
+            const mid = midPointOnArc(50, 50, RAD_TEXT + 1.5, startAngle + segAngle/2)
             const fs = calcFontSize(s.label)
             return (
               <g key={s.label}>
@@ -703,41 +786,39 @@ export default function App(){
 
   return (
     <div style={{minHeight:'100vh',background:'#0b0b0b',color:'#eaeaea',padding:16,fontFamily:'system-ui, sans-serif'}}>
-      
-    <header className="app-header">
-      <div className="brand-title">
-        <span className="app-emoji" aria-hidden>🎡</span>
-        <h1 className="app-title">Ruleta de Datos</h1>
-      </div>
-
-      {user ? (
-        <div className="user-strip">
-          <span className="user-label">Conectado como</span>
-          <b className="user-email">{user.email}</b>
-          <button
-            onClick={salir}
-            className="logout-icon"
-            title="Salir"
-            aria-label="Salir"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
+      <header className="app-header">
+        <div className="brand-title">
+          <span className="app-emoji" aria-hidden>🎡</span>
+          <h1 className="app-title">Ruleta de Datos</h1>
         </div>
-      ) : (
-        <div className="ga-strip">
-          <span className="ga-title">ACTIVIDAD GOOGLE ANALYTICS</span>
-          <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer" className="ga-badge">
-            <img src={unirLogo} alt="UNIR" />
-          </a>
-        </div>
-      )}
-    </header>
 
+        {user ? (
+          <div className="user-strip">
+            <span className="user-label">Conectado como</span>
+            <b className="user-email">{user.email}</b>
+            <button
+              onClick={salir}
+              className="logout-icon"
+              title="Salir"
+              aria-label="Salir"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <div className="ga-strip">
+            <span className="ga-title">ACTIVIDAD GOOGLE ANALYTICS</span>
+            <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer" className="ga-badge">
+              <img src={unirLogo} alt="UNIR" />
+            </a>
+          </div>
+        )}
+      </header>
 
       <main style={{maxWidth:1200,margin:'0 auto'}}>
         {!user && (
