@@ -451,3 +451,24 @@ html, body { overflow-x: hidden; }
   .ga-title{ font-size:12px; line-height:1.1; }
   .ga-badge img{ height:28px; }
 }
+/* Desktop: tabla más flexible y "Nombre" más ancho */
+@media (min-width: 981px) {
+  .table-wrap { overflow-x: visible; }
+  .table-wrap table {
+    width: 100%;
+    table-layout: auto;   /* deja que la 2ª columna tome más espacio */
+  }
+  /* por defecto, no wraps raros en otras celdas */
+  .table-wrap th,
+  .table-wrap td {
+    white-space: nowrap;
+  }
+  /* columna "Nombre" (2ª): permitir salto y darle más ancho máximo */
+  .table-wrap thead th:nth-child(2),
+  .table-wrap tbody td:nth-child(2) {
+    white-space: normal;     /* permite múltiples líneas */
+    max-width: 40ch;         /* sube si quieres aún más (ej. 48ch) */
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+}
