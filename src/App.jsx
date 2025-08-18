@@ -879,7 +879,7 @@ export default function App(){
             <>
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',rowGap:6}}>
-                  <b>Gobierno de dato</b>
+                  <b>Gobierno del dato</b>
                   <div style={{display:'flex',alignItems:'center',gap:10}}>
                     <span style={{fontSize:14,opacity:.9}}>Puntaje: <b>{myStats?.totalScore ?? 0}</b></span>
                     <button
@@ -915,7 +915,7 @@ export default function App(){
             <div className="grid-main">
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                  <b>Gobierno de dato</b>
+                  <b>Gobierno del dato</b>
                   {profileError && <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:8,marginBottom:8,fontSize:12,marginLeft:8}}>{profileError}</div>}
                 </div>
 
