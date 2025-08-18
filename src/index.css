@@ -239,7 +239,7 @@ body{
 
 /* Tabla: scroll horizontal si se achica */
 .table-wrap { overflow-x: auto; }
-.table-wrap table { min-width: 520px; }
+/*.table-wrap table { min-width: 520px; }*/
 
 /* ===== MODO COMPACTO MÓVIL ===== */
 @media (max-width: 480px) {
@@ -316,4 +316,30 @@ html, body { overflow-x: hidden; }
     max-width: 340px; /* acompasa el ancho de la ruleta en móvil */
     margin-inline:auto;
   }
+}
+/* Desktop: sin scroll horizontal, que la tabla se ajuste */
+@media (min-width: 981px) {
+  .table-wrap { overflow-x: visible; }
+  .table-wrap table {
+    min-width: 0;       /* clave: permite encoger */
+    width: 100%;
+    table-layout: fixed;/* celdas reparten espacio parejo */
+  }
+  .table-wrap th,
+  .table-wrap td {
+    white-space: nowrap;   /* evita wraps raros */
+  }
+  /* Columna "Nombre" (2ª): recorta con elipsis si es muy larga */
+  .table-wrap thead th:nth-child(2),
+  .table-wrap tbody td:nth-child(2) {
+    max-width: 22ch;       /* ajusta según prefieras (18–28ch) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Móvil: mantenemos la tabla ancha con scroll, como antes */
+@media (max-width: 980px) {
+  .table-wrap { overflow-x: auto; }
+  .table-wrap table { min-width: 520px; }  /* aquí sí */
 }
