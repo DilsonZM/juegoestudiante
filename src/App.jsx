@@ -11,7 +11,7 @@ import {
 } from 'firebase/auth'
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp,
-  collection, addDoc, query, orderBy, limit, getDocs, runTransaction
+  collection, addDoc, query, orderBy, limit, getDocs, runTransaction, onSnapshot
 } from 'firebase/firestore'
 import './index.css'
 import unirLogo from './assets/unir.png'
@@ -32,7 +32,7 @@ function useFirebase() {
   return { app, auth, db }
 }
 
-/* ==== Helper: detectar móvil por ancho (breakpoint 900px) ==== */
+/* ==== Helper: detectar móvil por ancho ==== */
 function useIsMobile(breakpoint = 900) {
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
@@ -49,7 +49,7 @@ function useIsMobile(breakpoint = 900) {
   return isMobile
 }
 
-/* ==== Modal básico accesible (solo móvil lo usamos) ==== */
+/* ==== Modal básico ==== */
 function Modal({ open, title, onClose, children }) {
   if (!open) return null
   return (
@@ -109,7 +109,7 @@ const EyeOff = (
   </svg>
 )
 
-/* ==== Login con Google (popup + fallback redirect) ==== */
+/* ==== Login con Google ==== */
 const googleProvider = new GoogleAuthProvider()
 async function loginWithGoogle(auth) {
   try {
@@ -138,7 +138,6 @@ function AuthPanel({ auth, db, onReady }) {
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
 
-  // ✅ Memoizado: evita warnings en deps
   const saveProfile = useCallback(async (uid, profile) => {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
   }, [db])
@@ -487,28 +486,19 @@ async function fetchLeaderboard(db){
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
-// --- Badge oro/plata/bronce siempre visible ---
+// Badge top 3
 function MedalBadge({ rank }) {
-  const bg =
-    rank === 1 ? '#fbbf24' :
-    rank === 2 ? '#d1d5db' :
-    rank === 3 ? '#cd7f32' : null
+  const bg = rank === 1 ? '#fbbf24' : rank === 2 ? '#d1d5db' : rank === 3 ? '#cd7f32' : null
   if (!bg) return null
   return (
     <span
       style={{
-        width: 18, height: 18,
-        display: 'inline-grid', placeItems: 'center',
-        borderRadius: '50%',
-        background: bg,
-        color: '#0b0b0b', fontSize: 12, fontWeight: 900,
-        marginRight: 8,
-        boxShadow: '0 0 0 1px #0b0b0b inset, 0 1px 2px rgba(0,0,0,.35)'
+        width: 18, height: 18, display: 'inline-grid', placeItems: 'center',
+        borderRadius: '50%', background: bg, color: '#0b0b0b', fontSize: 12, fontWeight: 900,
+        marginRight: 8, boxShadow: '0 0 0 1px #0b0b0b inset, 0 1px 2px rgba(0,0,0,.35)'
       }}
       aria-hidden
-    >
-      ★
-    </span>
+    >★</span>
   )
 }
 
@@ -706,15 +696,16 @@ export default function App(){
   const [profileError,setProfileError] = useState(null)
   const [lastResult,setLastResult] = useState(null)
   const [showLbModal, setShowLbModal] = useState(false)
+  const [myStats, setMyStats] = useState(null) // 👈 puntaje propio
 
-  // Resultado de redirect de Google
+  // Google redirect result
   useEffect(() => {
     getRedirectResult(auth).catch((e) => {
       if (e) console.error('Google redirect error:', e)
     })
   }, [auth])
 
-  // Sesión + creación de perfil
+  // Sesión + perfil mínimo
   useEffect(()=> onAuthStateChanged(auth, async (u)=>{
     setUser(u)
     if(!u){ setProfileReady(false); return }
@@ -737,6 +728,16 @@ export default function App(){
       setProfileReady(true)
     }
   }), [auth, db])
+
+  // 🔴 Suscribe al doc de tu puntuación
+  useEffect(() => {
+    if (!user) { setMyStats(null); return }
+    const ref = doc(db, 'userstats', user.uid)
+    const unsub = onSnapshot(ref, (snap) => {
+      setMyStats(snap.exists() ? snap.data() : null)
+    }, (err) => console.error('myStats error:', err))
+    return () => unsub()
+  }, [db, user])
 
   const onSpinResult = useCallback(async (res)=>{
     setLastResult(res)
@@ -826,9 +827,11 @@ export default function App(){
           ? (
             <>
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',rowGap:6}}>
                   <b>Actividad</b>
-                  <div style={{display:'flex',gap:8}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    {/* 👇 Puntaje a la izquierda del botón Top 10 */}
+                    <span style={{fontSize:14,opacity:.9}}>Puntaje: <b>{myStats?.totalScore ?? 0}</b></span>
                     <button
                       className="btn btn-sm"
                       onClick={()=>setShowLbModal(true)}
@@ -875,7 +878,17 @@ export default function App(){
                 )}
               </div>
 
-              <Leaderboard db={db} />
+              {/* 👇 Columna derecha: Top10 + tarjeta con tu puntaje */}
+              <div>
+                <Leaderboard db={db} />
+                <div style={{border:'1px solid #333',borderRadius:12,padding:12,marginTop:12,background:'rgba(255,255,255,.04)'}}>
+                  <div style={{fontWeight:800,marginBottom:6}}>Tu puntaje</div>
+                  <div style={{display:'flex',gap:18,flexWrap:'wrap',fontSize:14}}>
+                    <div>Score: <b>{myStats?.totalScore ?? 0}</b></div>
+                    <div>Giros: <b>{myStats?.totalSpins ?? 0}</b></div>
+                  </div>
+                </div>
+              </div>
             </div>
           )
         )}
