@@ -46,7 +46,8 @@ body{
 .auth-main{
   display:grid;
   place-items:center;
-  padding:48px 20px;
+  /* ↓↓ antes 48px 20px: eso bajaba el card del login en desktop */
+  padding:28px 20px;
 }
 
 .auth-card{
@@ -215,15 +216,10 @@ body{
   .grid-main { grid-template-columns: 1fr; }
 }
 
-/* ⚠️ NO volver a definir .auth-shell aquí en desktop.
-   Ya tienes arriba:
-   .auth-shell{ grid-template-columns: minmax(320px, 520px) 1fr }
-   y el @media (max-width: 980px) que la pone a 1fr y oculta el aside. */
-
 /* Ruleta responsive */
 .wheel-wrap {
   position: relative;
-  width: clamp(240px, 90vw, 420px); /* si quieres verla más grande en desktop, sube 420 a 480 */
+  width: clamp(240px, 90vw, 420px);
   aspect-ratio: 1 / 1;
   margin-top: 6px;
 }
@@ -239,7 +235,7 @@ body{
 
 /* Tabla: scroll horizontal si se achica */
 .table-wrap { overflow-x: auto; }
-/*.table-wrap table { min-width: 520px; }*/
+/* .table-wrap table { min-width: 520px; }  <-- lo movemos a móvil abajo */
 
 /* ===== MODO COMPACTO MÓVIL ===== */
 @media (max-width: 480px) {
@@ -252,6 +248,7 @@ body{
   .wheel-legend { grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .table-wrap table { font-size: 13px; min-width: 460px; }
 }
+
 /* ===== Leyenda de la ruleta (estilos base desktop) ===== */
 .legend-item{
   display:flex;
@@ -262,77 +259,50 @@ body{
   border:1px solid #222;
   border-radius:8px;
   padding:6px 8px;
-  min-width: 0; /* para que flex permita wrap */
+  min-width: 0;
 }
 .legend-swatch{
-  width:10px;
-  height:10px;
-  border-radius:2px;
-  flex: 0 0 auto;
+  width:10px; height:10px; border-radius:2px; flex: 0 0 auto;
 }
 .legend-label{
-  flex:1 1 auto;
-  min-width:0;
-  line-height:1.2;
-  /* permite que “Interoperabilidad” no rompa el chip en pantallas chicas */
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  flex:1 1 auto; min-width:0; line-height:1.2;
+  word-break: break-word; overflow-wrap: anywhere; hyphens: auto;
 }
 .legend-points{
-  opacity:.85;
-  font-weight:700;
-  flex: 0 0 auto;
+  opacity:.85; font-weight:700; flex: 0 0 auto;
 }
 
-/* Centrar la ruleta y evitar “corrimiento” horizontal */
-.wheel-wrap{
-  margin-inline:auto;
-}
+/* Centrar la ruleta y evitar scroll lateral fantasma */
+.wheel-wrap{ margin-inline:auto; }
 html, body { overflow-x: hidden; }
 
-/* ===== SOLO MÓVIL: hacer los chips más pequeños y evitar desborde ===== */
+/* SOLO MÓVIL: chips más pequeños */
 @media (max-width: 480px){
-  .legend-item{
-    gap:6px;
-    font-size: 11.5px;
-    padding: 4px 6px;
-  }
-  .legend-swatch{
-    width:8px;
-    height:8px;
-  }
-  .legend-points{
-    font-size: 11px;
-  }
-  /* la ruleta un pelín más contenida para no dar sensación de “corrida” */
-  .wheel-wrap{
-    width: min(88vw, 340px);
-  }
-  /* la grilla de la leyenda en 2 columnas compactas */
+  .legend-item{ gap:6px; font-size:11.5px; padding:4px 6px; }
+  .legend-swatch{ width:8px; height:8px; }
+  .legend-points{ font-size:11px; }
+  .wheel-wrap{ width: min(88vw, 340px); }
   .wheel-legend{
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 6px !important;
-    max-width: 340px; /* acompasa el ancho de la ruleta en móvil */
+    max-width: 340px;
     margin-inline:auto;
   }
 }
-/* Desktop: sin scroll horizontal, que la tabla se ajuste */
+
+/* Desktop: tabla ajustada sin scroll horizontal */
 @media (min-width: 981px) {
   .table-wrap { overflow-x: visible; }
   .table-wrap table {
-    min-width: 0;       /* clave: permite encoger */
+    min-width: 0;
     width: 100%;
-    table-layout: fixed;/* celdas reparten espacio parejo */
+    table-layout: fixed;
   }
-  .table-wrap th,
-  .table-wrap td {
-    white-space: nowrap;   /* evita wraps raros */
-  }
-  /* Columna "Nombre" (2ª): recorta con elipsis si es muy larga */
+  .table-wrap th, .table-wrap td { white-space: nowrap; }
+  /* Columna "Nombre" recorta con elipsis si se pasa */
   .table-wrap thead th:nth-child(2),
   .table-wrap tbody td:nth-child(2) {
-    max-width: 22ch;       /* ajusta según prefieras (18–28ch) */
+    max-width: 22ch;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -341,56 +311,5 @@ html, body { overflow-x: hidden; }
 /* Móvil: mantenemos la tabla ancha con scroll, como antes */
 @media (max-width: 980px) {
   .table-wrap { overflow-x: auto; }
-  .table-wrap table { min-width: 520px; }  /* aquí sí */
-}
-
-
-/* ===== Igualar alturas SOLO en desktop (>=981px) ===== */
-@media (min-width: 981px) {
-  /* Que las dos columnas del grid estiren a la misma altura */
-  .auth-shell { align-items: stretch; }
-
-  /* El contenedor de la derecha (login) deja de centrar vertical y estira */
-  .auth-main {
-    display: grid;
-    align-items: stretch;     /* <- clave */
-    justify-items: center;    /* centrado horizontal como antes */
-  }
-
-  /* El card de login toma todo el alto disponible */
-  .auth-main .auth-card {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* En el aside, el contenedor "Top 10 jugadores" ocupa todo el alto
-     (es el 2° div dentro de .auth-art: primero va .brand) */
-  .auth-art > div:nth-of-type(2) {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Dentro de ese contenedor, el bloque que envuelve a la tabla estira */
-  .auth-art > div:nth-of-type(2) > div:last-child {
-    flex: 1 1 auto;
-    min-height: 0; /* evita overflow en flex */
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* La tabla puede crecer sin forzar scroll vertical del card */
-  .auth-art .table-wrap { flex: 1 1 auto; }
-}
-/* Alinear bordes superiores de los cards SOLO en desktop */
-@media (min-width: 981px) {
-  /* Por si el grid intentara centrar algo, lo forzamos a top */
-  .auth-shell { align-items: start; }
-
-  /* Baja el card del Top 10 dentro del aside (es el 2º div, después de .brand) */
-  .auth-art > div:nth-of-type(2) {
-    /* estaba en inline margin-top: 24px; lo sobreescribimos */
-    margin-top: 56px !important; /* ajusta 48–64px según tu ojo */
-  }
+  .table-wrap table { min-width: 520px; }
 }
