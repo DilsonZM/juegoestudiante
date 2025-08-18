@@ -550,13 +550,14 @@ function Wheel({ onResult }) {
     <div style={{display:'grid',placeItems:'center',gap:12}}>
       <div className="wheel-legend">
         {SEGMENTS.map(s=>(
-          <div key={s.label} style={{display:'flex',alignItems:'center',gap:8, fontSize:13, background:'#141414', border:'1px solid #222', borderRadius:8, padding:'6px 8px'}}>
-            <span style={{width:10,height:10,borderRadius:2,background:s.color,display:'inline-block'}} />
-            <span style={{flex:1}}>{s.label}</span>
-            <span style={{opacity:.85}}>+{s.points}</span>
+          <div key={s.label} className="legend-item">
+            <span className="legend-swatch" style={{ background: s.color }} />
+            <span className="legend-label">{s.label}</span>
+            <span className="legend-points">+{s.points}</span>
           </div>
         ))}
       </div>
+
 
       <div className="wheel-wrap">
         <div style={{
