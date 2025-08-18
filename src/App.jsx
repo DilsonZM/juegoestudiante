@@ -12,7 +12,6 @@ import {
   collection, addDoc, query, orderBy, limit, getDocs, runTransaction
 } from 'firebase/firestore'
 import './index.css'
-import ruletaImg from './assets/ruleta.png'
 import unirLogo from './assets/unir.png'
 
 const FIREBASE_CONFIG = {
@@ -42,13 +41,7 @@ function Logo() {
   )
 }
 
-function Scene() {
-  return (
-    <div className="scene">
-      <img src={ruletaImg} alt="Ilustración" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-    </div>
-  )
-}
+// Ojo: Scene NO se usa, lo removí para evitar warnings.
 
 const Eye = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden style={{fill:'#888',stroke:'#888'}}>
@@ -83,22 +76,42 @@ function AuthPanel({ auth, db, onReady }) {
       await updateProfile(cred.user, { displayName })
       await saveProfile(cred.user.uid, { displayName, gender, city })
       onReady?.()
-  } catch (e) { showErrorSwal(getFirebaseErrorMsg(e)) }
-    finally { setLoading(false) }
+    } catch (e) {
+      showErrorSwal(getFirebaseErrorMsg(e))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const doLogin = async () => {
     setLoading(true); setError('')
-    try { await signInWithEmailAndPassword(auth, email, password); onReady?.() }
-  catch (e) { showErrorSwal(getFirebaseErrorMsg(e)) }
-    finally { setLoading(false) }
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      onReady?.()
+    } catch (e) {
+      showErrorSwal(getFirebaseErrorMsg(e))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const doReset = async () => {
     setLoading(true); setError('')
-  try { await sendPasswordResetEmail(auth, email); Swal.fire({icon:'success',title:'Solicitud enviada',text:'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.',confirmButtonColor:'#1dd1c6',background:'#131a3a',color:'#e8ecf4'}) }
-  catch (e) { showErrorSwal(getFirebaseErrorMsg(e)) }
-    finally { setLoading(false) }
+    try {
+      await sendPasswordResetEmail(auth, email)
+      Swal.fire({
+        icon:'success',
+        title:'Solicitud enviada',
+        text:'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.',
+        confirmButtonColor:'#1dd1c6',
+        background:'#131a3a',
+        color:'#e8ecf4'
+      })
+    } catch (e) {
+      showErrorSwal(getFirebaseErrorMsg(e))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const action = mode === 'login' ? doLogin : mode === 'register' ? doRegister : doReset
@@ -198,7 +211,6 @@ function AuthPanel({ auth, db, onReady }) {
                 placeholder="Solo tu primer nombre"
                 value={displayName}
                 onChange={e => {
-                  // Solo permitir primer nombre sin espacios
                   const val = e.target.value.replace(/\s.*/, '')
                   setDisplayName(val)
                 }}
@@ -326,6 +338,31 @@ async function fetchLeaderboard(db){
   return snap.docs.map(d => ({ id: d.id, ...d.data() }))
 }
 
+// --- Badge oro/plata/bronce siempre visible ---
+function MedalBadge({ rank }) {
+  const bg =
+    rank === 1 ? '#fbbf24' :    // oro
+    rank === 2 ? '#d1d5db' :    // plata
+    rank === 3 ? '#cd7f32' : null // bronce
+  if (!bg) return null
+  return (
+    <span
+      style={{
+        width: 18, height: 18,
+        display: 'inline-grid', placeItems: 'center',
+        borderRadius: '50%',
+        background: bg,
+        color: '#0b0b0b', fontSize: 12, fontWeight: 900,
+        marginRight: 8,
+        boxShadow: '0 0 0 1px #0b0b0b inset, 0 1px 2px rgba(0,0,0,.35)'
+      }}
+      aria-hidden
+    >
+      ★
+    </span>
+  )
+}
+
 function Leaderboard({ db }){
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
@@ -338,6 +375,7 @@ function Leaderboard({ db }){
       const data = await fetchLeaderboard(db)
       setRows(data)
     } catch (err) {
+      console.error('Top10 load failed:', err) // ESLint feliz
       setError('Error al consultar los datos del Top 10. Verifica tu conexión o permisos de Firebase.')
       setRows([])
     } finally {
@@ -356,10 +394,18 @@ function Leaderboard({ db }){
     <div style={{border:'1px solid #333',borderRadius:12,padding:16}}>
       <div style={{display:'flex',alignItems:'center',marginBottom:8}}>
         <b style={{flex:1}}>Top 10 (Total Score)</b>
-        <button className="btn btn-primary btn-sm" style={{fontSize:12,padding:'2px 6px',height:26,minWidth:0,borderRadius:7,width:'auto',marginLeft:'auto'}} onClick={load}>Actualizar</button>
+        <button
+          className="btn btn-primary btn-sm"
+          style={{fontSize:12,padding:'2px 6px',height:26,minWidth:0,borderRadius:7,width:'auto',marginLeft:'auto'}}
+          onClick={load}
+        >
+          Actualizar
+        </button>
       </div>
+
       {loading && <div style={{opacity:.7,fontSize:12}}>Cargando…</div>}
       {error && <div style={{color:'#ff6b6b',fontSize:13,marginBottom:8}}>{error}</div>}
+
       <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
         <thead>
           <tr style={{textAlign:'left',opacity:.9}}>
@@ -373,7 +419,12 @@ function Leaderboard({ db }){
           {rows.map((r,i)=>(
             <tr key={r.id} style={{borderBottom:'1px solid #222'}}>
               <td style={{padding:'6px 8px'}}>#{i+1}</td>
-              <td style={{padding:'6px 8px'}}>{r.displayName || r.id}</td>
+              <td style={{padding:'6px 8px'}}>
+                <div style={{ display:'inline-flex', alignItems:'center' }}>
+                  <MedalBadge rank={i+1} />
+                  <span>{r.displayName || r.id}</span>
+                </div>
+              </td>
               <td style={{padding:'6px 8px',textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
               <td style={{padding:'6px 8px',textAlign:'center'}}>{r.totalSpins || 0}</td>
             </tr>
@@ -546,45 +597,45 @@ export default function App(){
   return (
     <div style={{minHeight:'100vh',background:'#0b0b0b',color:'#eaeaea',padding:16,fontFamily:'system-ui, sans-serif'}}>
       <header style={{maxWidth:1024,margin:'0 auto 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-             <div style={{display:'flex',alignItems:'center',gap:12}}>
-               <span style={{fontSize:'2.3rem',lineHeight:1,display:'block'}}>🎡</span>
-               <h1 style={{margin:0, fontSize: '2rem', lineHeight: 1}}>Ruleta de Datos</h1>
-             </div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span style={{fontSize:'2.3rem',lineHeight:1,display:'block'}}>🎡</span>
+          <h1 style={{margin:0, fontSize: '2rem', lineHeight: 1}}>Ruleta de Datos</h1>
+        </div>
         <div style={{fontSize:14,opacity:.85}}>
-              {user ? (
-                <>Conectado como <b>{user.email}</b> ·
-                  <button
-                    onClick={salir}
-                    style={{
-                      background: 'linear-gradient(90deg, var(--brand), var(--brand-2))',
-                      color: '#08211f',
-                      border: '1px solid var(--stroke)',
-                      borderRadius: 8,
-                      padding: '4px 8px',
-                      fontSize: 16,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      boxShadow: '0 8px 20px rgba(0,0,0,.18)',
-                      cursor: 'pointer',
-                      marginLeft: 8
-                    }}
-                    title="Salir"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:2}}>
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                      <polyline points="16 17 21 12 16 7"/>
-                      <line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
-                  </button>
-                </>
-              ) : (
-                <div style={{display:'flex',alignItems:'center',gap:10}}>
-                  <span style={{fontWeight:700,letterSpacing:0.5,fontSize:15,display:'inline-block'}}>ACTIVIDAD GOOGLE ANALYTICS</span>
-                  <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer">
-                    <img src={unirLogo} alt="UNIR" style={{height:32,marginLeft:6,borderRadius:8,verticalAlign:'middle',cursor:'pointer'}} />
-                  </a>
-                </div>
-              )}
+          {user ? (
+            <>Conectado como <b>{user.email}</b> ·
+              <button
+                onClick={salir}
+                style={{
+                  background: 'linear-gradient(90deg, var(--brand), var(--brand-2))',
+                  color: '#08211f',
+                  border: '1px solid var(--stroke)',
+                  borderRadius: 8,
+                  padding: '4px 8px',
+                  fontSize: 16,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  boxShadow: '0 8px 20px rgba(0,0,0,.18)',
+                  cursor: 'pointer',
+                  marginLeft: 8
+                }}
+                title="Salir"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:2}}>
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+              </button>
+            </>
+          ) : (
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontWeight:700,letterSpacing:0.5,fontSize:15,display:'inline-block'}}>ACTIVIDAD GOOGLE ANALYTICS</span>
+              <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer">
+                <img src={unirLogo} alt="UNIR" style={{height:32,marginLeft:6,borderRadius:8,verticalAlign:'middle',cursor:'pointer'}} />
+              </a>
+            </div>
+          )}
         </div>
       </header>
 
