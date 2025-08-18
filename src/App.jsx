@@ -282,68 +282,101 @@ function AuthPanel({ auth, db, onReady }) {
                 onChange={e => setCity(e.target.value)}
               />
             </div>
+
             <div className="field">
               <label htmlFor="gender">Género</label>
-              <div style={{
-                display: 'flex',
-                gap: 10,
-                background: 'rgba(255,255,255,.08)',
-                borderRadius: 12,
-                padding: '4px 6px',
-                border: '1px solid var(--stroke)',
-                alignItems: 'center',
-                marginTop: 2
-              }}>
-                <button type="button" onClick={()=>setGender('M')} style={{
-                  background: gender==='M' ? 'linear-gradient(90deg, var(--brand), var(--brand-2))' : 'transparent',
-                  color: gender==='M' ? '#08211f' : 'var(--text)',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '6px 12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
+              <div
+                style={{
                   display: 'flex',
+                  gap: 10,
+                  rowGap: 6,
+                  flexWrap: 'wrap',              // 👈 permite saltar a 2-3 filas en móvil
+                  background: 'rgba(255,255,255,.08)',
+                  borderRadius: 12,
+                  padding: '4px 6px',
+                  border: '1px solid var(--stroke)',
                   alignItems: 'center',
-                  boxShadow: gender==='M' ? '0 4px 12px rgba(0,0,0,.10)' : 'none',
-                  fontSize: 15
-                }}>
+                  marginTop: 2
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={()=>setGender('M')}
+                  style={{
+                    background: gender==='M' ? 'linear-gradient(90deg, var(--brand), var(--brand-2))' : 'transparent',
+                    color: gender==='M' ? '#08211f' : 'var(--text)',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '6px 10px',         // 👈 un pelín menor
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    boxShadow: gender==='M' ? '0 4px 12px rgba(0,0,0,.10)' : 'none',
+                    fontSize: 14,                // 👈 baja en móvil
+                    lineHeight: 1.2,
+                    whiteSpace: 'normal',        // 👈 permite partir “Prefiero…”
+                    minWidth: 0,
+                    flex: '1 1 120px'            // 👈 base flexible: no se desborda
+                  }}
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:5}}><circle cx="12" cy="12" r="10"/><path d="M16 8v-4h-4"/><line x1="16" y1="8" x2="21" y2="3"/></svg>
                   Masculino
                 </button>
-                <button type="button" onClick={()=>setGender('F')} style={{
-                  background: gender==='F' ? 'linear-gradient(90deg, var(--brand), var(--brand-2))' : 'transparent',
-                  color: gender==='F' ? '#08211f' : 'var(--text)',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '6px 12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  boxShadow: gender==='F' ? '0 4px 12px rgba(0,0,0,.10)' : 'none',
-                  fontSize: 15
-                }}>
+
+                <button
+                  type="button"
+                  onClick={()=>setGender('F')}
+                  style={{
+                    background: gender==='F' ? 'linear-gradient(90deg, var(--brand), var(--brand-2))' : 'transparent',
+                    color: gender==='F' ? '#08211f' : 'var(--text)',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '6px 10px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    boxShadow: gender==='F' ? '0 4px 12px rgba(0,0,0,.10)' : 'none',
+                    fontSize: 14,
+                    lineHeight: 1.2,
+                    whiteSpace: 'normal',
+                    minWidth: 0,
+                    flex: '1 1 120px'
+                  }}
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:5}}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M9 20h6"/></svg>
                   Femenino
                 </button>
-                <button type="button" onClick={()=>setGender('X')} style={{
-                  background: gender==='X' ? 'linear-gradient(90deg, var(--brand), var(--brand-2))' : 'transparent',
-                  color: gender==='X' ? '#08211f' : 'var(--text)',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '6px 12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  boxShadow: gender==='X' ? '0 4px 12px rgba(0,0,0,.10)' : 'none',
-                  fontSize: 15
-                }}>
+
+                <button
+                  type="button"
+                  onClick={()=>setGender('X')}
+                  style={{
+                    background: gender==='X' ? 'linear-gradient(90deg, var(--brand), var(--brand-2))' : 'transparent',
+                    color: gender==='X' ? '#08211f' : 'var(--text)',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '6px 10px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    boxShadow: gender==='X' ? '0 4px 12px rgba(0,0,0,.10)' : 'none',
+                    fontSize: 14,
+                    lineHeight: 1.2,
+                    whiteSpace: 'normal',
+                    minWidth: 0,
+                    flex: '1 1 120px'
+                  }}
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:5}}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
                   Prefiero no decir
                 </button>
               </div>
             </div>
+
+
           </>
         )}
 
@@ -713,7 +746,7 @@ export default function App(){
             <div className="auth-shell">
               <aside className="auth-art" style={{display:'flex',flexDirection:'column',height:'100%'}}>
                 <Logo />
-                <div className="top10-pane" style={{flex:1,display:'flex',flexDirection:'column',/* quita marginTop:24 */ background:'rgba(30,32,60,0.55)',border:'1px solid var(--stroke)',borderRadius:'16px',boxShadow:'0 4px 24px #0003',padding:'18px 10px',minHeight:0}}>
+                <div style={{flex:1,display:'flex',flexDirection:'column',marginTop:24,background:'rgba(30,32,60,0.55)',border:'1px solid var(--stroke)',borderRadius:'16px',boxShadow:'0 4px 24px #0003',padding:'18px 10px',minHeight:0}}>
                   <h2 style={{color:'#fff',textAlign:'center',fontWeight:800,letterSpacing:0.5,margin:'0 0 12px 0',fontSize:22}}>Top 10 jugadores</h2>
                   <div style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
                     <Leaderboard db={db} />
