@@ -30,6 +30,61 @@ function useFirebase() {
   return { app, auth, db }
 }
 
+/* ==== Helper: detectar móvil por ancho (breakpoint 900px) ==== */
+function useIsMobile(breakpoint = 900) {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width:${breakpoint}px)`)
+    const handler = (e) => setIsMobile(e.matches)
+    setIsMobile(mq.matches)
+    if (mq.addEventListener) mq.addEventListener('change', handler)
+    else mq.addListener(handler)
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', handler)
+      else mq.removeListener(handler)
+    }
+  }, [breakpoint])
+  return isMobile
+}
+
+/* ==== Modal básico accesible (solo móvil lo usamos) ==== */
+function Modal({ open, title, onClose, children }) {
+  if (!open) return null
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      style={{
+        position:'fixed', inset:0, zIndex:1000,
+        background:'rgba(0,0,0,.55)', display:'grid', placeItems:'center', padding:'12px'
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width:'min(560px, 96vw)', maxHeight:'90vh', overflow:'auto',
+          background:'#0f1115', color:'#eaeaea',
+          border:'1px solid #333', borderRadius:12, boxShadow:'0 20px 60px rgba(0,0,0,.55)'
+        }}
+        onClick={(e)=>e.stopPropagation()}
+      >
+        <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderBottom:'1px solid #222'}}>
+          <strong style={{fontSize:16}}>{title}</strong>
+          <button
+            onClick={onClose}
+            className="btn btn-sm"
+            style={{marginLeft:'auto',borderRadius:8,border:'1px solid #3f3f46',background:'#18181b',color:'#fafafa',padding:'6px 10px'}}
+          >Cerrar</button>
+        </div>
+        <div style={{padding:12}}>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Logo() {
   return (
     <div className="brand">
@@ -40,8 +95,6 @@ function Logo() {
     </div>
   )
 }
-
-// Ojo: Scene NO se usa, lo removí para evitar warnings.
 
 const Eye = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden style={{fill:'#888',stroke:'#888'}}>
@@ -341,9 +394,9 @@ async function fetchLeaderboard(db){
 // --- Badge oro/plata/bronce siempre visible ---
 function MedalBadge({ rank }) {
   const bg =
-    rank === 1 ? '#fbbf24' :    // oro
-    rank === 2 ? '#d1d5db' :    // plata
-    rank === 3 ? '#cd7f32' : null // bronce
+    rank === 1 ? '#fbbf24' :
+    rank === 2 ? '#d1d5db' :
+    rank === 3 ? '#cd7f32' : null
   if (!bg) return null
   return (
     <span
@@ -375,7 +428,7 @@ function Leaderboard({ db }){
       const data = await fetchLeaderboard(db)
       setRows(data)
     } catch (err) {
-      console.error('Top10 load failed:', err) // ESLint feliz
+      console.error('Top10 load failed:', err)
       setError('Error al consultar los datos del Top 10. Verifica tu conexión o permisos de Firebase.')
       setRows([])
     } finally {
@@ -406,34 +459,36 @@ function Leaderboard({ db }){
       {loading && <div style={{opacity:.7,fontSize:12}}>Cargando…</div>}
       {error && <div style={{color:'#ff6b6b',fontSize:13,marginBottom:8}}>{error}</div>}
 
-      <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
-        <thead>
-          <tr style={{textAlign:'left',opacity:.9}}>
-            <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>#</th>
-            <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Nombre</th>
-            <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Score total</th>
-            <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Giros totales</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r,i)=>(
-            <tr key={r.id} style={{borderBottom:'1px solid #222'}}>
-              <td style={{padding:'6px 8px'}}>#{i+1}</td>
-              <td style={{padding:'6px 8px'}}>
-                <div style={{ display:'inline-flex', alignItems:'center' }}>
-                  <MedalBadge rank={i+1} />
-                  <span>{r.displayName || r.id}</span>
-                </div>
-              </td>
-              <td style={{padding:'6px 8px',textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
-              <td style={{padding:'6px 8px',textAlign:'center'}}>{r.totalSpins || 0}</td>
+      <div className="table-wrap">
+        <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
+          <thead>
+            <tr style={{textAlign:'left',opacity:.9}}>
+              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>#</th>
+              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Nombre</th>
+              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Score total</th>
+              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Giros totales</th>
             </tr>
-          ))}
-          {!rows.length && !loading && !error && (
-            <tr><td colSpan={4} style={{padding:'8px',opacity:.7}}>Aún no hay acumulados.</td></tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((r,i)=>(
+              <tr key={r.id} style={{borderBottom:'1px solid #222'}}>
+                <td style={{padding:'6px 8px'}}>#{i+1}</td>
+                <td style={{padding:'6px 8px'}}>
+                  <div style={{ display:'inline-flex', alignItems:'center' }}>
+                    <MedalBadge rank={i+1} />
+                    <span>{r.displayName || r.id}</span>
+                  </div>
+                </td>
+                <td style={{padding:'6px 8px',textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
+                <td style={{padding:'6px 8px',textAlign:'center'}}>{r.totalSpins || 0}</td>
+              </tr>
+            ))}
+            {!rows.length && !loading && !error && (
+              <tr><td colSpan={4} style={{padding:'8px',opacity:.7}}>Aún no hay acumulados.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -493,7 +548,7 @@ function Wheel({ onResult }) {
 
   return (
     <div style={{display:'grid',placeItems:'center',gap:12}}>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(2, minmax(0,1fr))',gap:6, width:360}}>
+      <div className="wheel-legend">
         {SEGMENTS.map(s=>(
           <div key={s.label} style={{display:'flex',alignItems:'center',gap:8, fontSize:13, background:'#141414', border:'1px solid #222', borderRadius:8, padding:'6px 8px'}}>
             <span style={{width:10,height:10,borderRadius:2,background:s.color,display:'inline-block'}} />
@@ -503,7 +558,7 @@ function Wheel({ onResult }) {
         ))}
       </div>
 
-      <div style={{position:'relative',width:360,height:360, marginTop:6}}>
+      <div className="wheel-wrap">
         <div style={{
           position:'absolute', left:'50%', top:-8, transform:'translateX(-50%)',
           width:0, height:0, borderLeft:'12px solid transparent', borderRight:'12px solid transparent',
@@ -519,25 +574,18 @@ function Wheel({ onResult }) {
           }}
         >
           {SEGMENTS.map((s, i) => {
-            const startAngle = i * segAngle
-            const endAngle = startAngle + segAngle
+            const startAngle = i * (360 / SEGMENTS.length)
+            const endAngle = startAngle + (360 / SEGMENTS.length)
             const largeArc = endAngle - startAngle <= 180 ? 0 : 1
             const start = polarToCartesian(50, 50, 49, endAngle)
             const end = polarToCartesian(50, 50, 49, startAngle)
             const d = [`M 50 50`,`L ${start.x} ${start.y}`,`A 49 49 0 ${largeArc} 0 ${end.x} ${end.y}`,`Z`].join(' ')
-            const mid = midPointOnArc(50, 50, RAD_TEXT + 1.5, startAngle + segAngle/2)
+            const mid = midPointOnArc(50, 50, RAD_TEXT + 1.5, startAngle + (360 / SEGMENTS.length)/2)
             const fs = calcFontSize(s.label)
             return (
               <g key={s.label}>
                 <path d={d} fill={s.color} stroke="#0b0b0b" strokeWidth="0.6"/>
-                <text
-                  x={mid.x}
-                  y={mid.y}
-                  fontSize={fs}
-                  fill="#0b0b0b"
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                >
+                <text x={mid.x} y={mid.y} fontSize={fs} fill="#0b0b0b" textAnchor="middle" dominantBaseline="middle">
                   {s.label}
                 </text>
               </g>
@@ -556,10 +604,12 @@ function Wheel({ onResult }) {
 
 export default function App(){
   const { auth, db } = useFirebase()
+  const isMobile = useIsMobile(900)
   const [user,setUser] = useState(null)
   const [profileReady,setProfileReady] = useState(false)
   const [profileError,setProfileError] = useState(null)
   const [lastResult,setLastResult] = useState(null)
+  const [showLbModal, setShowLbModal] = useState(false) // modal Top 10 (solo móvil)
 
   useEffect(()=> onAuthStateChanged(auth, async (u)=>{
     setUser(u)
@@ -599,7 +649,7 @@ export default function App(){
       <header style={{maxWidth:1024,margin:'0 auto 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <span style={{fontSize:'2.3rem',lineHeight:1,display:'block'}}>🎡</span>
-          <h1 style={{margin:0, fontSize: '2rem', lineHeight: 1}}>Ruleta de Datos</h1>
+          <h1 className="app-title" style={{margin:0}}>Ruleta de Datos</h1>
         </div>
         <div style={{fontSize:14,opacity:.85}}>
           {user ? (
@@ -641,41 +691,98 @@ export default function App(){
 
       <main style={{maxWidth:1200,margin:'0 auto'}}>
         {!user && (
-          <div className="auth-shell">
-            <aside className="auth-art" style={{display:'flex',flexDirection:'column',height:'100%'}}>
-              <Logo />
-              <div style={{flex:1,display:'flex',flexDirection:'column',marginTop:24,background:'rgba(30,32,60,0.55)',border:'1px solid var(--stroke)',borderRadius:'16px',boxShadow:'0 4px 24px #0003',padding:'18px 10px',minHeight:0}}>
-                <h2 style={{color:'#fff',textAlign:'center',fontWeight:800,letterSpacing:0.5,margin:'0 0 12px 0',fontSize:22}}>Top 10 jugadores</h2>
-                <div style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
-                  <Leaderboard db={db} />
-                </div>
-              </div>
-            </aside>
-            <main className="auth-main">
+          isMobile
+          ? (
+            <div style={{display:'grid',gap:12}}>
               <AuthPanel auth={auth} db={db} onReady={()=>{}} />
-            </main>
-          </div>
+              <button
+                onClick={()=>setShowLbModal(true)}
+                className="btn"
+                style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'10px 14px'}}
+              >
+                Ver Top 10
+              </button>
+
+              <Modal open={showLbModal} title="Top 10 jugadores" onClose={()=>setShowLbModal(false)}>
+                <Leaderboard db={db} />
+              </Modal>
+            </div>
+          )
+          : (
+            <div className="auth-shell">
+              <aside className="auth-art" style={{display:'flex',flexDirection:'column',height:'100%'}}>
+                <Logo />
+                <div style={{flex:1,display:'flex',flexDirection:'column',marginTop:24,background:'rgba(30,32,60,0.55)',border:'1px solid var(--stroke)',borderRadius:'16px',boxShadow:'0 4px 24px #0003',padding:'18px 10px',minHeight:0}}>
+                  <h2 style={{color:'#fff',textAlign:'center',fontWeight:800,letterSpacing:0.5,margin:'0 0 12px 0',fontSize:22}}>Top 10 jugadores</h2>
+                  <div style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
+                    <Leaderboard db={db} />
+                  </div>
+                </div>
+              </aside>
+              <main className="auth-main">
+                <AuthPanel auth={auth} db={db} onReady={()=>{}} />
+              </main>
+            </div>
+          )
         )}
 
         {user && profileReady && (
-          <div style={{display:'grid',gap:16,gridTemplateColumns:'1fr 1fr', marginTop:16}}>
-            <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                <b>Actividad</b>
-                {profileError && <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:8,marginBottom:8,fontSize:12,marginLeft:8}}>{profileError}</div>}
+          isMobile
+          ? (
+            <>
+              <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <b>Actividad</b>
+                  <div style={{display:'flex',gap:8}}>
+                    <button
+                      className="btn btn-sm"
+                      onClick={()=>setShowLbModal(true)}
+                      style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', padding:'4px 10px', borderRadius:8}}
+                    >
+                      Top 10
+                    </button>
+                    {profileError && (
+                      <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:6,fontSize:12,marginLeft:8}}>
+                        {profileError}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Wheel onResult={onSpinResult} />
+
+                {lastResult && (
+                  <div style={{marginTop:12, padding:10, border:'1px dashed #3f3f46', borderRadius:10}}>
+                    Último resultado: <b>{lastResult.label}</b> · Puntos: <b>{lastResult.points}</b>
+                  </div>
+                )}
               </div>
 
-              <Wheel onResult={onSpinResult} />
-
-              {lastResult && (
-                <div style={{marginTop:12, padding:10, border:'1px dashed #3f3f46', borderRadius:10}}>
-                  Último resultado: <b>{lastResult.label}</b> · Puntos: <b>{lastResult.points}</b>
+              <Modal open={showLbModal} title="Top 10 jugadores" onClose={()=>setShowLbModal(false)}>
+                <Leaderboard db={db} />
+              </Modal>
+            </>
+          )
+          : (
+            <div className="grid-main">
+              <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                  <b>Actividad</b>
+                  {profileError && <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:8,marginBottom:8,fontSize:12,marginLeft:8}}>{profileError}</div>}
                 </div>
-              )}
-            </div>
 
-            <Leaderboard db={db} />
-          </div>
+                <Wheel onResult={onSpinResult} />
+
+                {lastResult && (
+                  <div style={{marginTop:12, padding:10, border:'1px dashed #3f3f46', borderRadius:10}}>
+                    Último resultado: <b>{lastResult.label}</b> · Puntos: <b>{lastResult.points}</b>
+                  </div>
+                )}
+              </div>
+
+              <Leaderboard db={db} />
+            </div>
+          )
         )}
       </main>
     </div>

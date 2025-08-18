@@ -200,3 +200,81 @@ body{
   .auth-main{padding:28px 16px}
   .auth-card{padding:22px}
 }
+/* Título que escala bien */
+.app-title {
+  font-size: clamp(1.6rem, 4vw, 2rem);
+}
+
+/* Grid principal (logueado) */
+.grid-main {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 16px;
+}
+@media (max-width: 900px) {
+  .grid-main { grid-template-columns: 1fr; }
+}
+
+/* Auth shell responsive (si no lo tienes ya) */
+.auth-shell {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .auth-shell { grid-template-columns: 1fr; }
+}
+
+/* Ruleta responsive */
+.wheel-wrap {
+  position: relative;
+  width: clamp(240px, 90vw, 420px);
+  aspect-ratio: 1 / 1;
+  margin-top: 6px;
+}
+
+/* Leyenda responsive */
+.wheel-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Tabla: scroll horizontal si se achica mucho */
+.table-wrap { overflow-x: auto; }
+.table-wrap table { min-width: 520px; }
+/* Título responsivo */
+.app-title { font-size: clamp(1.6rem, 4vw, 2rem); }
+
+/* Grid principal (desktop) */
+.grid-main { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 16px; }
+@media (max-width: 900px) { .grid-main { grid-template-columns: 1fr; } }
+
+/* Auth shell (desktop) */
+.auth-shell { display: grid; grid-template-columns: 380px 1fr; gap: 16px; }
+@media (max-width: 900px) { .auth-shell { grid-template-columns: 1fr; } }
+
+/* Ruleta responsive */
+.wheel-wrap { position: relative; width: clamp(240px, 90vw, 420px); aspect-ratio: 1 / 1; margin-top: 6px; }
+
+/* Leyenda responsive */
+.wheel-legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 6px; width: 100%; max-width: 420px; }
+
+/* Tabla: scroll horizontal si se achica */
+.table-wrap { overflow-x: auto; }
+.table-wrap table { min-width: 520px; }
+
+/* ===== MODO COMPACTO MÓVIL ===== */
+@media (max-width: 480px) {
+  body { font-size: 14px; }
+  .auth-card { padding: 12px !important; }
+  .auth-card .field input { padding: 8px 10px; font-size: 14px; }
+  .btn { padding: 8px 12px; font-size: 14px; }
+  .btn.btn-sm { padding: 4px 8px; font-size: 13px; }
+  .wheel-wrap { width: min(92vw, 360px); }
+  .wheel-legend { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .table-wrap table { font-size: 13px; min-width: 460px; }
+}
