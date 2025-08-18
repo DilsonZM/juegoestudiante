@@ -313,3 +313,18 @@ html, body { overflow-x: hidden; }
   .table-wrap { overflow-x: auto; }
   .table-wrap table { min-width: 520px; }
 }
+/* ===== Desktop: pegar el auth-card arriba ===== */
+@media (min-width: 981px) {
+  /* que la columna derecha NO centre vertical */
+  .auth-main {
+    display: grid;
+    align-items: start;       /* <- clave: deja de centrar vertical */
+    justify-items: center;    /* horizontal sigue centrado */
+    padding-top: 28px !important;  /* mismo respiro que el aside */
+  }
+  /* por si alguna regla insiste en centrar el card */
+  .auth-main .auth-card {
+    align-self: start;
+    margin-top: 0;
+  }
+}
