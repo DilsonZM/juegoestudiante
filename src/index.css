@@ -343,3 +343,54 @@ html, body { overflow-x: hidden; }
   .table-wrap { overflow-x: auto; }
   .table-wrap table { min-width: 520px; }  /* aquí sí */
 }
+
+
+/* ===== Igualar alturas SOLO en desktop (>=981px) ===== */
+@media (min-width: 981px) {
+  /* Que las dos columnas del grid estiren a la misma altura */
+  .auth-shell { align-items: stretch; }
+
+  /* El contenedor de la derecha (login) deja de centrar vertical y estira */
+  .auth-main {
+    display: grid;
+    align-items: stretch;     /* <- clave */
+    justify-items: center;    /* centrado horizontal como antes */
+  }
+
+  /* El card de login toma todo el alto disponible */
+  .auth-main .auth-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* En el aside, el contenedor "Top 10 jugadores" ocupa todo el alto
+     (es el 2° div dentro de .auth-art: primero va .brand) */
+  .auth-art > div:nth-of-type(2) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Dentro de ese contenedor, el bloque que envuelve a la tabla estira */
+  .auth-art > div:nth-of-type(2) > div:last-child {
+    flex: 1 1 auto;
+    min-height: 0; /* evita overflow en flex */
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* La tabla puede crecer sin forzar scroll vertical del card */
+  .auth-art .table-wrap { flex: 1 1 auto; }
+}
+/* Alinear bordes superiores de los cards SOLO en desktop */
+@media (min-width: 981px) {
+  /* Por si el grid intentara centrar algo, lo forzamos a top */
+  .auth-shell { align-items: start; }
+
+  /* Baja el card del Top 10 dentro del aside (es el 2º div, después de .brand) */
+  .auth-art > div:nth-of-type(2) {
+    /* estaba en inline margin-top: 24px; lo sobreescribimos */
+    margin-top: 56px !important; /* ajusta 48–64px según tu ojo */
+  }
+}
