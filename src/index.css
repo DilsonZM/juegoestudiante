@@ -328,3 +328,17 @@ html, body { overflow-x: hidden; }
     margin-top: 0;
   }
 }
+/* Registro móvil: evitar overflow del card por padding + ancho fijo */
+@media (max-width: 480px) {
+  .auth-main { padding: 20px 12px; }     /* un poco menos de padding lateral */
+  .auth-card { width: 100%; }            /* no uses 92vw aquí para que no sume con el padding */
+  .form { gap: 12px; }
+
+  /* Botonera de género aún más compacta si hace falta */
+  .auth-card .field button {
+    /* estos botones (los 3 de género) ya traen flex-wrap vía inline,
+       aquí solo afinamos si el idioma/zoom los hace crecer */
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+}
