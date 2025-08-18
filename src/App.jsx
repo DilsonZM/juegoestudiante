@@ -1,4 +1,3 @@
-// src/App.jsx
 import { getFirebaseErrorMsg } from './firebaseErrorMap'
 import Swal from 'sweetalert2'
 import { showErrorSwal } from './swal'
@@ -11,7 +10,8 @@ import {
 } from 'firebase/auth'
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp,
-  collection, addDoc, query, orderBy, limit, getDocs, runTransaction
+  collection, addDoc, query, orderBy, limit, getDocs, runTransaction,
+  onSnapshot, getCountFromServer, where
 } from 'firebase/firestore'
 import './index.css'
 import unirLogo from './assets/unir.png'
@@ -32,7 +32,7 @@ function useFirebase() {
   return { app, auth, db }
 }
 
-/* ==== Helper: detectar móvil por ancho (breakpoint 900px) ==== */
+/* ==== Helper: detectar móvil por ancho ==== */
 function useIsMobile(breakpoint = 900) {
   const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
@@ -49,7 +49,7 @@ function useIsMobile(breakpoint = 900) {
   return isMobile
 }
 
-/* ==== Modal básico accesible (solo móvil lo usamos) ==== */
+/* ==== Modal básico ==== */
 function Modal({ open, title, onClose, children }) {
   if (!open) return null
   return (
@@ -109,7 +109,7 @@ const EyeOff = (
   </svg>
 )
 
-/* ==== Login con Google (popup + fallback redirect) ==== */
+/* ==== Login con Google ==== */
 const googleProvider = new GoogleAuthProvider()
 async function loginWithGoogle(auth) {
   try {
@@ -127,6 +127,39 @@ async function loginWithGoogle(auth) {
   }
 }
 
+/* ====== FIRESTORE HELPERS ====== */
+async function submitSpinAndAccumulate(db, uid, displayName, result){
+  const spinsCol = collection(db, 'spins')
+  const statsRef = doc(db, 'userstats', uid)
+  await addDoc(spinsCol, { uid, ...result, createdAt: serverTimestamp() })
+  await runTransaction(db, async (tx)=>{
+    const snap = await tx.get(statsRef)
+    const prev = snap.exists() ? snap.data() : { totalScore: 0, totalSpins: 0, displayName: displayName || 'Anónimo' }
+    const next = {
+      displayName: displayName || prev.displayName || 'Anónimo',
+      totalScore: (prev.totalScore || 0) + (result.points || 0),
+      totalSpins: (prev.totalSpins || 0) + 1,
+      updatedAt: serverTimestamp(),
+    }
+    tx.set(statsRef, next, { merge:true })
+  })
+}
+
+async function fetchLeaderboard(db){
+  const qTop = query(collection(db,'userstats'), orderBy('totalScore','desc'), limit(10))
+  const snap = await getDocs(qTop)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+}
+
+/** Devuelve la posición global (1-based) estimada por score. */
+async function fetchUserRankByScore(db, score){
+  const qCount = query(collection(db,'userstats'), where('totalScore', '>', score || 0))
+  const agg = await getCountFromServer(qCount)
+  // # de usuarios con score mayor + 1
+  return (agg.data().count || 0) + 1
+}
+
+/* ====== AUTH PANEL ====== */
 function AuthPanel({ auth, db, onReady }) {
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
@@ -138,7 +171,6 @@ function AuthPanel({ auth, db, onReady }) {
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
 
-  // ✅ Memoizado: evita warnings en deps
   const saveProfile = useCallback(async (uid, profile) => {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
   }, [db])
@@ -464,58 +496,27 @@ function AuthPanel({ auth, db, onReady }) {
   )
 }
 
-async function submitSpinAndAccumulate(db, uid, displayName, result){
-  const spinsCol = collection(db, 'spins')
-  const statsRef = doc(db, 'userstats', uid)
-  await addDoc(spinsCol, { uid, ...result, createdAt: serverTimestamp() })
-  await runTransaction(db, async (tx)=>{
-    const snap = await tx.get(statsRef)
-    const prev = snap.exists() ? snap.data() : { totalScore: 0, totalSpins: 0, displayName: displayName || 'Anónimo' }
-    const next = {
-      displayName: displayName || prev.displayName || 'Anónimo',
-      totalScore: (prev.totalScore || 0) + (result.points || 0),
-      totalSpins: (prev.totalSpins || 0) + 1,
-      updatedAt: serverTimestamp(),
-    }
-    tx.set(statsRef, next, { merge:true })
-  })
-}
-
-async function fetchLeaderboard(db){
-  const q = query(collection(db,'userstats'), orderBy('totalScore','desc'), limit(10))
-  const snap = await getDocs(q)
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
-}
-
-// --- Badge oro/plata/bronce siempre visible ---
+/* ====== LEADERBOARD (Top 10 + fila del usuario si no está en top) ====== */
 function MedalBadge({ rank }) {
-  const bg =
-    rank === 1 ? '#fbbf24' :
-    rank === 2 ? '#d1d5db' :
-    rank === 3 ? '#cd7f32' : null
+  const bg = rank === 1 ? '#fbbf24' : rank === 2 ? '#d1d5db' : rank === 3 ? '#cd7f32' : null
   if (!bg) return null
   return (
     <span
       style={{
-        width: 18, height: 18,
-        display: 'inline-grid', placeItems: 'center',
-        borderRadius: '50%',
-        background: bg,
-        color: '#0b0b0b', fontSize: 12, fontWeight: 900,
-        marginRight: 8,
-        boxShadow: '0 0 0 1px #0b0b0b inset, 0 1px 2px rgba(0,0,0,.35)'
+        width: 18, height: 18, display: 'inline-grid', placeItems: 'center',
+        borderRadius: '50%', background: bg, color: '#0b0b0b', fontSize: 12, fontWeight: 900,
+        marginRight: 8, boxShadow: '0 0 0 1px #0b0b0b inset, 0 1px 2px rgba(0,0,0,.35)'
       }}
       aria-hidden
-    >
-      ★
-    </span>
+    >★</span>
   )
 }
 
-function Leaderboard({ db }){
+function Leaderboard({ db, currentUser, myStats }){
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [myRank, setMyRank] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -538,6 +539,48 @@ function Leaderboard({ db }){
     window.addEventListener('reload-top10', h)
     return () => window.removeEventListener('reload-top10', h)
   }, [load])
+
+  // calcula el rank del usuario si está logueado y no aparece en el top
+  useEffect(() => {
+    (async () => {
+      if (!currentUser) { setMyRank(null); return }
+      const inTop = rows.some(r => r.id === currentUser.uid)
+      if (inTop) { setMyRank(null); return }
+      try {
+        const rank = await fetchUserRankByScore(db, myStats?.totalScore || 0)
+        setMyRank(rank)
+      } catch (e) {
+        console.error('rank error:', e)
+        setMyRank(null)
+      }
+    })()
+  }, [db, rows, currentUser, myStats?.totalScore])
+
+  const renderRow = (r, i, opts={}) => (
+    <tr key={opts.key || r.id} style={{borderBottom:'1px solid #222', background: opts.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'}}>
+      <td style={{padding:'6px 8px'}}>#{i}</td>
+      <td style={{padding:'6px 8px'}}>
+        <div style={{ display:'inline-flex', alignItems:'center' }}>
+          <MedalBadge rank={i} />
+          <span>{r.displayName || r.id}</span>
+        </div>
+      </td>
+      <td style={{padding:'6px 8px',textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
+      <td style={{padding:'6px 8px',textAlign:'center'}}>{r.totalSpins || 0}</td>
+    </tr>
+  )
+
+  const isLogged = !!currentUser
+  const userInTopIndex = isLogged ? rows.findIndex(r => r.id === currentUser.uid) : -1
+  const userInTop = userInTopIndex >= 0
+
+  // Datos para la fila del usuario fuera de top
+  const myRowData = isLogged ? {
+    id: currentUser.uid,
+    displayName: myStats?.displayName || currentUser.displayName || currentUser.email,
+    totalScore: myStats?.totalScore || 0,
+    totalSpins: myStats?.totalSpins || 0
+  } : null
 
   return (
     <div style={{border:'1px solid #333',borderRadius:12,padding:16}}>
@@ -566,21 +609,17 @@ function Leaderboard({ db }){
             </tr>
           </thead>
           <tbody>
-            {rows.map((r,i)=>(
-              <tr key={r.id} style={{borderBottom:'1px solid #222'}}>
-                <td style={{padding:'6px 8px'}}>#{i+1}</td>
-                <td style={{padding:'6px 8px'}}>
-                  <div style={{ display:'inline-flex', alignItems:'center' }}>
-                    <MedalBadge rank={i+1} />
-                    <span>{r.displayName || r.id}</span>
-                  </div>
-                </td>
-                <td style={{padding:'6px 8px',textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
-                <td style={{padding:'6px 8px',textAlign:'center'}}>{r.totalSpins || 0}</td>
-              </tr>
-            ))}
-            {!rows.length && !loading && !error && (
-              <tr><td colSpan={4} style={{padding:'8px',opacity:.7}}>Aún no hay acumulados.</td></tr>
+            {rows.map((r, idx)=> renderRow(r, idx+1))}
+            {/* Fila del usuario si NO está en el top y está logueado */}
+            {isLogged && !userInTop && myRowData && (
+              <>
+                <tr><td colSpan={4} style={{padding:4}} /></tr>
+                {renderRow(
+                  myRowData,
+                  myRank ?? '—',
+                  { key: 'me', highlight: true }
+                )}
+              </>
             )}
           </tbody>
         </table>
@@ -589,6 +628,7 @@ function Leaderboard({ db }){
   )
 }
 
+/* ====== RULETA ====== */
 const SEGMENTS = [
   { label: 'Calidad',           points: 10, color: '#60a5fa' },
   { label: 'Seguridad',         points: 9,  color: '#f59e0b' },
@@ -698,6 +738,7 @@ function Wheel({ onResult }) {
   )
 }
 
+/* ====== APP ====== */
 export default function App(){
   const { auth, db } = useFirebase()
   const isMobile = useIsMobile(900)
@@ -706,18 +747,19 @@ export default function App(){
   const [profileError,setProfileError] = useState(null)
   const [lastResult,setLastResult] = useState(null)
   const [showLbModal, setShowLbModal] = useState(false)
+  const [myStats, setMyStats] = useState(null)
 
-  // Resultado de redirect de Google
+  // Google redirect result
   useEffect(() => {
     getRedirectResult(auth).catch((e) => {
       if (e) console.error('Google redirect error:', e)
     })
   }, [auth])
 
-  // Sesión + creación de perfil
+  // Sesión + perfil mínimo
   useEffect(()=> onAuthStateChanged(auth, async (u)=>{
     setUser(u)
-    if(!u){ setProfileReady(false); return }
+    if(!u){ setProfileReady(false); setMyStats(null); return }
     try{
       const ref = doc(db,'users',u.uid)
       const snap = await getDoc(ref)
@@ -737,6 +779,16 @@ export default function App(){
       setProfileReady(true)
     }
   }), [auth, db])
+
+  // Suscripción a tu doc de puntuación
+  useEffect(() => {
+    if (!user) return undefined
+    const ref = doc(db, 'userstats', user.uid)
+    const unsub = onSnapshot(ref, (snap) => {
+      setMyStats(snap.exists() ? snap.data() : null)
+    }, (err) => console.error('myStats error:', err))
+    return () => unsub()
+  }, [db, user])
 
   const onSpinResult = useCallback(async (res)=>{
     setLastResult(res)
@@ -826,9 +878,10 @@ export default function App(){
           ? (
             <>
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                  <b>Tabla de valores</b>
-                  <div style={{display:'flex',gap:8}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',rowGap:6}}>
+                  <b>Gobierno de dato</b>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <span style={{fontSize:14,opacity:.9}}>Puntaje: <b>{myStats?.totalScore ?? 0}</b></span>
                     <button
                       className="btn btn-sm"
                       onClick={()=>setShowLbModal(true)}
@@ -854,7 +907,7 @@ export default function App(){
               </div>
 
               <Modal open={showLbModal} title="Top 10 jugadores" onClose={()=>setShowLbModal(false)}>
-                <Leaderboard db={db} />
+                <Leaderboard db={db} currentUser={user} myStats={myStats} />
               </Modal>
             </>
           )
@@ -862,7 +915,7 @@ export default function App(){
             <div className="grid-main">
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                  <b>Actividad</b>
+                  <b>Gobierno de dato</b>
                   {profileError && <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:8,marginBottom:8,fontSize:12,marginLeft:8}}>{profileError}</div>}
                 </div>
 
@@ -875,7 +928,8 @@ export default function App(){
                 )}
               </div>
 
-              <Leaderboard db={db} />
+              {/* Derecha: Top10; si no estás en top, aparece tu fila con posición global */}
+              <Leaderboard db={db} currentUser={user} myStats={myStats} />
             </div>
           )
         )}
