@@ -1,3 +1,4 @@
+// src/App.jsx
 import { getFirebaseErrorMsg } from './firebaseErrorMap'
 import Swal from 'sweetalert2'
 import { showErrorSwal } from './swal'
@@ -6,8 +7,7 @@ import { initializeApp, getApps } from 'firebase/app'
 import {
   getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
   signInWithEmailAndPassword, signOut, sendPasswordResetEmail, updateProfile,
-  // 👇 Google Sign-In
-  GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult
+  GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
 } from 'firebase/auth'
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp,
@@ -76,7 +76,7 @@ function Modal({ open, title, onClose, children }) {
           <button
             onClick={onClose}
             className="btn btn-sm"
-            style={{marginLeft:'auto',borderRadius:8,border:'1px solid var(--stroke)',background:'rgba(255,255,255,.06)',color:'var(--text)',padding:'6px 10px'}}
+            style={{marginLeft:'auto',borderRadius:8,border:'1px solid var(--stroke)',background:'#18181b',color:'#fafafa',padding:'6px 10px'}}
           >Cerrar</button>
         </div>
         <div style={{padding:12}}>
@@ -105,9 +105,27 @@ const Eye = (
 )
 const EyeOff = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden style={{fill:'#888',stroke:'#888'}}>
-    <path d="M2 5l2-2 17 17-2 2-3.1-3.1A11.8 11.8 0 0112 19C5 19 2 12 2 12a20.9 20.9 0 013.7-5.6L2 5zm8.6 3.2L8.7 6.3A4.9 4.9 0 007 10a5 5 0 007 4.7l-1.8-1.8A3 3 0 009 10c0-.6.2-1.2.6-1.8zM12 5c2.2 0 4 .6 5.7 1.7A17.6 17.6 0 0122 12s-3 7-10 7c-.9 0-1.7-.1-2.5-.3l 2.3-2.3c.1 0 .1 0 .2.1A5 5 0 0017 10a4.8 4.8 0 00-.4-2l1.6-1.6A13.3 13.3 0 0012 5z" />
+    <path d="M2 5l2-2 17 17-2 2-3.1-3.1A11.8 11.8 0 0112 19C5 19 2 12 2 12a20.9 20.9 0 013.7-5.6L2 5zm8.6 3.2L8.7 6.3A4.9 4.9 0 007 10a5 5 0 007 4.7l-1.8-1.8A3 3 0 009 10c0-.6.2-1.2.6-1.8zM12 5c2.2 0 4 .6 5.7 1.7A17.6 17.6 0 0122 12s-3 7-10 7c-.9 0-1.7-.1-2.5-.3l2.3-2.3c.1 0 .1 0 .2.1A5 5 0 0017 10a4.8 4.8 0 00-.4-2l1.6-1.6A13.3 13.3 0 0012 5z" />
   </svg>
 )
+
+/* ==== Login con Google (popup + fallback redirect) ==== */
+const googleProvider = new GoogleAuthProvider()
+async function loginWithGoogle(auth) {
+  try {
+    await signInWithPopup(auth, googleProvider)
+  } catch (e) {
+    if (
+      e.code === 'auth/popup-blocked' ||
+      e.code === 'auth/cancelled-popup-request' ||
+      e.code === 'auth/operation-not-supported-in-this-environment'
+    ) {
+      await signInWithRedirect(auth, googleProvider)
+    } else {
+      showErrorSwal(getFirebaseErrorMsg(e))
+    }
+  }
+}
 
 function AuthPanel({ auth, db, onReady }) {
   const [mode, setMode] = useState('login')
@@ -120,80 +138,14 @@ function AuthPanel({ auth, db, onReady }) {
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
 
-  const saveProfile = async (uid, profile) => {
+  // ✅ Memoizado: evita warnings en deps
+  const saveProfile = useCallback(async (uid, profile) => {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
-  }
-
-  // ⏪ Manejar retorno de redirect (móvil / popup bloqueado)
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await getRedirectResult(auth)
-        if (res?.user) {
-          const u = res.user
-          await saveProfile(u.uid, {
-            displayName: u.displayName || u.email,
-            gender: 'X',
-            city: 'N/A',
-            provider: 'google',
-            photoURL: u.photoURL || null,
-            createdAt: serverTimestamp(),
-          })
-          onReady?.()
-        }
-      } catch (e) {
-        showErrorSwal(getFirebaseErrorMsg(e))
-      }
-    })()
-  }, [auth]) // eslint OK
-
-  const doGoogleLogin = async () => {
-    setLoading(true); setError('')
-    try {
-      const provider = new GoogleAuthProvider()
-      provider.setCustomParameters({ prompt: 'select_account' })
-
-      let result
-      try {
-        result = await signInWithPopup(auth, provider)   // desktop
-      } catch (e) {
-        if (e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user') {
-          await signInWithRedirect(auth, provider)       // móvil / bloqueo
-          return
-        }
-        throw e
-      }
-
-      const u = result.user
-      await saveProfile(u.uid, {
-        displayName: u.displayName || u.email,
-        gender: 'X',
-        city: 'N/A',
-        provider: 'google',
-        photoURL: u.photoURL || null,
-        createdAt: serverTimestamp(),
-      })
-      onReady?.()
-    } catch (e) {
-      if (e?.code === 'auth/account-exists-with-different-credential') {
-        await Swal.fire({
-          icon:'warning',
-          title:'Ya existe una cuenta con ese correo',
-          text:'Ingresa con el método original (correo/contraseña) y podrás vincular Google luego.',
-          confirmButtonColor:'#1dd1c6', background:'#131a3a', color:'#e8ecf4'
-        })
-      } else {
-        showErrorSwal(getFirebaseErrorMsg(e))
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [db])
 
   const doRegister = async () => {
     setLoading(true); setError('')
     try {
-      // Validación previa
       const name = (displayName || '').trim()
       if (!name) {
         await Swal.fire({
@@ -361,7 +313,6 @@ function AuthPanel({ auth, db, onReady }) {
                 title="Solo tu primer nombre, sin espacios"
               />
             </div>
-
             <div className="field">
               <label htmlFor="city">Ciudad</label>
               <input
@@ -472,36 +423,41 @@ function AuthPanel({ auth, db, onReady }) {
           {loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : mode === 'register' ? 'Crear cuenta' : 'Enviar correo'}
         </button>
 
-        {/* Separador + botón Google SOLO en modo login */}
         {mode === 'login' && (
-          <>
-            <div style={{display:'flex',alignItems:'center',gap:8,margin:'12px 0'}}>
-              <span style={{flex:1,height:1,background:'var(--stroke)'}} />
-              <span style={{opacity:.7,fontSize:13}}>o</span>
-              <span style={{flex:1,height:1,background:'var(--stroke)'}} />
-            </div>
-            <button
-              type="button"
-              onClick={doGoogleLogin}
-              disabled={loading}
-              style={{
-                width:'100%', height:44, borderRadius:12,
-                border:'1px solid var(--stroke)', background:'rgba(255,255,255,.06)',
-                color:'var(--text)', fontWeight:700, cursor:'pointer'
-              }}
-              title="Continuar con Google"
-            >
-              <span style={{display:'inline-flex',alignItems:'center',gap:8}}>
-                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
-                  <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 31.9 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.8 0 5.4 1.1 7.4 2.9l5.7-5.7C33.5 7.1 28.9 5 24 5 12.9 5 4 13.9 4 25s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.5-.4-3.7z"/>
-                  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.1 16.2 18.6 13 24 13c2.8 0 5.4 1.1 7.4 2.9l5.7-5.7C33.5 7.1 28.9 5 24 5c-7.7 0-14.3 4.3-17.7 10.7z"/>
-                  <path fill="#4CAF50" d="M24 45c4.9 0 9.4-1.9 12.7-5l-5.9-4.9C29 36.5 26.6 37 24 37c-5.2 0-9.6-3.1-11.5-7.5l-6.5 5.1C8.5 40.5 15.7 45 24 45z"/>
-                  <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.1-3.4 5.6-6.3 7.1l.1.1 5.9 4.9c-.4.4 7-4.9 7-15.1 0-1.3-.1-2.5-.4-3.7z"/>
-                </svg>
-                Continuar con Google
-              </span>
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => loginWithGoogle(auth)}
+            style={{
+              marginTop: 10,
+              width:'100%', height:46,
+              borderRadius:12, border:'1px solid var(--stroke)',
+              background:'#0f152d', color:'#e8ecf4',
+              fontWeight:800, letterSpacing: 0.3, cursor:'pointer',
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8
+            }}
+            aria-label="Continuar con Google"
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
+              <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12 s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C33.03,6.053,28.715,4,24,4C12.955,4,4,12.955,4,24 s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+              <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,16.146,18.961,14,24,14c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657 C33.03,6.053,28.715,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+              <path fill="#4CAF50" d="M24,44c4.646,0,8.902-1.785,12.102-4.689l-5.586-4.727C28.471,36.977,26.345,38,24,38 c-5.202,0-9.607-3.317-11.264-7.946l-6.493,5.013C9.556,39.556,16.227,44,24,44z"/>
+              <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.236-2.231,4.166-4.187,5.584l0.003-0.002l5.586,4.727 C35.971,38.495,44,32,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+            </svg>
+            Continuar con Google
+          </button>
+        )}
+
+        {mode === 'login' && (
+          <p className="muted center mt-16">
+            ¿No tienes cuenta?{' '}
+            <a className="link" href="#" onClick={(ev) => { ev.preventDefault(); setMode('register') }}>
+              Crear cuenta
+            </a>
+            {' '}·{' '}
+            <a className="link" href="#" onClick={(ev) => { ev.preventDefault(); setMode('reset') }}>
+              ¿Olvidaste tu contraseña?
+            </a>
+          </p>
         )}
       </form>
     </section>
@@ -698,7 +654,7 @@ function Wheel({ onResult }) {
         ))}
       </div>
 
-      <div className="wheel-wrap" style={{ position:'relative' }}>
+      <div className="wheel-wrap">
         <div style={{
           position:'absolute', left:'50%', top:-8, transform:'translateX(-50%)',
           width:0, height:0, borderLeft:'12px solid transparent', borderRight:'12px solid transparent',
@@ -714,13 +670,13 @@ function Wheel({ onResult }) {
           }}
         >
           {SEGMENTS.map((s, i) => {
-            const startAngle = i * segAngle
-            const endAngle = startAngle + segAngle
+            const startAngle = i * (360 / SEGMENTS.length)
+            const endAngle = startAngle + (360 / SEGMENTS.length)
             const largeArc = endAngle - startAngle <= 180 ? 0 : 1
             const start = polarToCartesian(50, 50, 49, endAngle)
             const end = polarToCartesian(50, 50, 49, startAngle)
             const d = [`M 50 50`,`L ${start.x} ${start.y}`,`A 49 49 0 ${largeArc} 0 ${end.x} ${end.y}`,`Z`].join(' ')
-            const mid = midPointOnArc(50, 50, RAD_TEXT + 1.5, startAngle + segAngle/2)
+            const mid = midPointOnArc(50, 50, RAD_TEXT + 1.5, startAngle + (360 / SEGMENTS.length)/2)
             const fs = calcFontSize(s.label)
             return (
               <g key={s.label}>
@@ -749,8 +705,16 @@ export default function App(){
   const [profileReady,setProfileReady] = useState(false)
   const [profileError,setProfileError] = useState(null)
   const [lastResult,setLastResult] = useState(null)
-  const [showLbModal, setShowLbModal] = useState(false) // modal Top 10 (solo móvil)
+  const [showLbModal, setShowLbModal] = useState(false)
 
+  // Resultado de redirect de Google
+  useEffect(() => {
+    getRedirectResult(auth).catch((e) => {
+      if (e) console.error('Google redirect error:', e)
+    })
+  }, [auth])
+
+  // Sesión + creación de perfil
   useEffect(()=> onAuthStateChanged(auth, async (u)=>{
     setUser(u)
     if(!u){ setProfileReady(false); return }
@@ -844,7 +808,7 @@ export default function App(){
               <aside className="auth-art" style={{display:'flex',flexDirection:'column',height:'100%'}}>
                 <Logo />
                 <div style={{flex:1,display:'flex',flexDirection:'column',marginTop:24,background:'rgba(30,32,60,0.55)',border:'1px solid var(--stroke)',borderRadius:'16px',boxShadow:'0 4px 24px #0003',padding:'18px 10px',minHeight:0}}>
-                  <h2 style={{color:'#fff',textAlign:'center',fontWeight:800,letterSpacing:0.5,margin:'0 0 12px 0',fontSize:22}}>Top 10 jugadores</h2>
+                  <h2 style={{color:'#fff',textAlign:'center',fontWeight:800,letterSpacing:0.3,margin:'0 0 12px 0',fontSize:22}}>Top 10 jugadores</h2>
                   <div style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
                     <Leaderboard db={db} />
                   </div>
