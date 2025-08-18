@@ -713,7 +713,7 @@ export default function App(){
             <div className="auth-shell">
               <aside className="auth-art" style={{display:'flex',flexDirection:'column',height:'100%'}}>
                 <Logo />
-                <div style={{flex:1,display:'flex',flexDirection:'column',marginTop:24,background:'rgba(30,32,60,0.55)',border:'1px solid var(--stroke)',borderRadius:'16px',boxShadow:'0 4px 24px #0003',padding:'18px 10px',minHeight:0}}>
+                <div className="top10-pane" style={{flex:1,display:'flex',flexDirection:'column',/* quita marginTop:24 */ background:'rgba(30,32,60,0.55)',border:'1px solid var(--stroke)',borderRadius:'16px',boxShadow:'0 4px 24px #0003',padding:'18px 10px',minHeight:0}}>
                   <h2 style={{color:'#fff',textAlign:'center',fontWeight:800,letterSpacing:0.5,margin:'0 0 12px 0',fontSize:22}}>Top 10 jugadores</h2>
                   <div style={{flex:1,display:'flex',flexDirection:'column',minHeight:0}}>
                     <Leaderboard db={db} />

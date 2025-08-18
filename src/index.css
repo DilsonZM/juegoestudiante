@@ -394,3 +394,7 @@ html, body { overflow-x: hidden; }
     margin-top: 56px !important; /* ajusta 48–64px según tu ojo */
   }
 }
+@media (min-width: 981px) {
+  .auth-shell { align-items: start; }
+  .top10-pane { margin-top: 56px; } /* calibra 48–64px si hace falta */
+}
