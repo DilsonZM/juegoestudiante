@@ -15,6 +15,7 @@ import Wheel from './components/Wheel'
 import Leaderboard from './components/Leaderboard'
 import AuthPanel from './components/AuthPanel'
 import AnswerFeedback from './components/AnswerFeedback'
+import Splash from './components/Splash'
 
 // (componentes inline eliminados; ahora se importan desde ./components)
 
@@ -35,6 +36,12 @@ export default function App(){
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackOk, setFeedbackOk] = useState(false)
   const [feedbackExplain, setFeedbackExplain] = useState('')
+  const [showSplash, setShowSplash] = useState(true)
+
+  useEffect(() => {
+    const t = setTimeout(()=> setShowSplash(false), 2500)
+    return () => clearTimeout(t)
+  }, [])
 
   // Google redirect result
   useEffect(() => {
@@ -126,6 +133,7 @@ export default function App(){
 
   return (
     <div style={{minHeight:'100vh',background:'#0b0b0b',color:'#eaeaea',padding:16,fontFamily:'system-ui, sans-serif'}}>
+  {showSplash && <Splash />}
       <header className="app-header">
         <div className="brand-title">
           <span className="app-emoji" aria-hidden>🎡</span>
