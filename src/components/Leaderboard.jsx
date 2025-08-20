@@ -61,15 +61,15 @@ export default function Leaderboard({ db, currentUser, myStats }){
 
   const renderRow = (r, i, opts={}) => (
     <tr key={opts.key || r.id} style={{borderBottom:'1px solid #222', background: opts.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'}}>
-      <td style={{padding:'6px 8px'}}>#{i}</td>
-      <td style={{padding:'6px 8px'}}>
+  <td style={{padding:'6px 8px 6px 8px', width:'2.8ch', textAlign:'right'}}>#{i}</td>
+  <td style={{padding:'6px 8px 6px 10px'}}>
         <div style={{ display:'inline-flex', alignItems:'center' }}>
           <MedalBadge rank={i} />
           <span>{r.displayName || r.id}</span>
         </div>
       </td>
-      <td style={{padding:'6px 8px',textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
-      <td style={{padding:'6px 8px',textAlign:'center'}}>{r.totalSpins || 0}</td>
+  <td style={{padding:'6px 8px', textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
+  <td style={{padding:'6px 8px', textAlign:'center'}}>{r.totalSpins || 0}</td>
     </tr>
   )
 
@@ -104,10 +104,10 @@ export default function Leaderboard({ db, currentUser, myStats }){
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:14}}>
           <thead>
             <tr style={{textAlign:'left',opacity:.9}}>
-              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>#</th>
-              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Nombre</th>
-              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Score total</th>
-              <th style={{padding:'6px 8px',borderBottom:'1px solid #333'}}>Giros totales</th>
+              <th style={{padding:'6px 8px 6px 8px',borderBottom:'1px solid #333', width:'2.8ch', textAlign:'right'}}>#</th>
+              <th style={{padding:'6px 8px 6px 10px',borderBottom:'1px solid #333'}}>Nombre</th>
+              <th style={{padding:'6px 8px',borderBottom:'1px solid #333', textAlign:'center'}}>Score total</th>
+              <th style={{padding:'6px 8px',borderBottom:'1px solid #333', textAlign:'center'}}>Giros totales</th>
             </tr>
           </thead>
           <tbody>

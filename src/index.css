@@ -215,6 +215,10 @@ body{
 @media (max-width: 900px) {
   .grid-main { grid-template-columns: 1fr; }
 }
+/* Desktop: hace más ancho el panel de la ruleta */
+@media (min-width: 981px) {
+  .grid-main { grid-template-columns: 3fr 2fr; }
+}
 
 /* Ruleta responsive */
 .wheel-wrap {
@@ -266,7 +270,9 @@ body{
 }
 .legend-label{
   flex:1 1 auto; min-width:0; line-height:1.2;
-  word-break: break-word; overflow-wrap: anywhere; hyphens: auto;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 .legend-points{
   opacity:.85; font-weight:700; flex: 0 0 auto;
@@ -329,10 +335,15 @@ html, body { overflow-x: hidden; }
   }
 }
 
-/* Desktop: ruleta ~20% más pequeña y leyenda acorde */
+/* Desktop: ruleta ~20% más pequeña; leyenda compacta bajo la ruleta */
 @media (min-width: 981px) {
-  .wheel-wrap { width: clamp(240px, 90vw, 336px); }
-  .wheel-legend { max-width: 336px; }
+  .wheel-wrap { width: clamp(260px, 90vw, 372px); }
+  .wheel-legend {
+    /* Leyenda 4×2: columnas con mínimo suficiente para "Interoperabilidad" */
+    max-width: none; /* usa el ancho del contenedor (columna izquierda) */
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+  margin-inline: auto;
+  }
 }
 /* ===== Desktop: pegar el auth-card arriba ===== */
 @media (min-width: 981px) {
@@ -476,20 +487,37 @@ html, body { overflow-x: hidden; }
 @media (min-width: 981px) {
   .table-wrap { overflow-x: visible; }
   .table-wrap table {
-    width: 100%;
-    table-layout: auto;   /* deja que la 2ª columna tome más espacio */
+  width: 100%;
+  table-layout: fixed;   /* ancho estable de columnas */
+  border-collapse: collapse; /* control exacto del espacio entre celdas */
   }
   /* por defecto, no wraps raros en otras celdas */
   .table-wrap th,
   .table-wrap td {
-    white-space: nowrap;
+  white-space: nowrap;   /* no wraps por defecto */
+  padding: 6px 8px;      /* padding compacto */
+  }
+  /* Columna # (1ª): muy angosta y pegada al nombre */
+  .table-wrap thead th:first-child,
+  .table-wrap tbody td:first-child {
+  width: 2.8ch;
+    text-align: right;
+  padding-right: 16px;  /* + separación hacia la 2ª columna */
   }
   /* columna "Nombre" (2ª): permitir salto y darle más ancho máximo */
   .table-wrap thead th:nth-child(2),
   .table-wrap tbody td:nth-child(2) {
-    white-space: normal;     /* permite múltiples líneas */
-    max-width: 40ch;         /* sube si quieres aún más (ej. 48ch) */
-    word-break: break-word;
-    overflow-wrap: anywhere;
+  white-space: nowrap;     /* no romper el nombre en varias líneas */
+  max-width: 30ch;         /* un poco más de espacio para nombres largos */
+  text-overflow: ellipsis;
+  overflow: hidden;
+  padding-left: 14px;      /* deja ~2 espacios respecto al # */
+  }
+  /* Centrar columnas 3 y 4 (Score total, Giros totales) */
+  .table-wrap thead th:nth-child(3),
+  .table-wrap thead th:nth-child(4),
+  .table-wrap tbody td:nth-child(3),
+  .table-wrap tbody td:nth-child(4) {
+    text-align: center;
   }
 }
