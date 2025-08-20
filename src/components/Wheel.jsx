@@ -12,7 +12,7 @@ const SEGMENTS = [
   { label: 'Interoperabilidad', points: 6,  color: '#22d3ee' },
 ]
 
-export default function Wheel({ onResult }) {
+export default function Wheel({ onResult, disabled }) {
   const [spinning,setSpinning] = useState(false)
   const [angle, setAngle] = useState(0)
 
@@ -20,7 +20,7 @@ export default function Wheel({ onResult }) {
   const RAD_TEXT = 36
 
   const spin = () => {
-    if(spinning) return
+    if(spinning || disabled) return
     setSpinning(true)
     const turns = 5 + Math.floor(Math.random()*4)
     const idx = Math.floor(Math.random()*SEGMENTS.length)

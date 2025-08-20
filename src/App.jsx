@@ -4,6 +4,9 @@ import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/fires
 import { useFirebase } from './hooks/useFirebase'
 import { useIsMobile } from './hooks/useIsMobile'
 import { submitSpinAndAccumulate } from './services/firestore'
+import QuestionModal from './components/QuestionModal'
+import { getRandomQuestion } from './questions/bank'
+import { persistQuizOutcome } from './services/gameplay'
 import './index.css'
 import unirLogo from './assets/unir.png'
 import Modal from './components/Modal'
@@ -11,6 +14,7 @@ import Logo from './components/Logo'
 import Wheel from './components/Wheel'
 import Leaderboard from './components/Leaderboard'
 import AuthPanel from './components/AuthPanel'
+import AnswerFeedback from './components/AnswerFeedback'
 
 // (componentes inline eliminados; ahora se importan desde ./components)
 
@@ -24,6 +28,13 @@ export default function App(){
   const [lastResult,setLastResult] = useState(null)
   const [showLbModal, setShowLbModal] = useState(false)
   const [myStats, setMyStats] = useState(null)
+  const [quizOpen, setQuizOpen] = useState(false)
+  const [quizQuestion, setQuizQuestion] = useState(null)
+  const [pendingSpin, setPendingSpin] = useState(null)
+  const [usedQuestionIds, setUsedQuestionIds] = useState(new Set())
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [feedbackOk, setFeedbackOk] = useState(false)
+  const [feedbackExplain, setFeedbackExplain] = useState('')
 
   // Google redirect result
   useEffect(() => {
@@ -68,11 +79,48 @@ export default function App(){
 
   const onSpinResult = useCallback(async (res)=>{
     setLastResult(res)
-    if(user && !profileError){
+    // Abrir pregunta basada en la categoría de la ruleta
+  const q = getRandomQuestion(res.label, usedQuestionIds)
+    if (q && user) {
+      setPendingSpin(res)
+      setQuizQuestion(q)
+      setQuizOpen(true)
+    } else if (user && !profileError) {
+      // Fallback: si no hay pregunta, sumar directo como antes
       await submitSpinAndAccumulate(db, user.uid, user.displayName || user.email, { label: res.label, points: res.points })
       window.dispatchEvent(new Event('reload-top10'))
     }
-  }, [db, user, profileError])
+  }, [db, user, profileError, usedQuestionIds])
+
+  const handleQuizAnswer = useCallback(async (answer) => {
+    if (!quizQuestion || !pendingSpin || !user) { setQuizOpen(false); return }
+    const wasTimeout = typeof answer === 'object' && answer?.timeout
+    const normalized = quizQuestion.type === 'tf' ? Boolean(answer) : String(answer).toLowerCase()
+    const correctAnswer = quizQuestion.type === 'tf' ? Boolean(quizQuestion.answer) : String(quizQuestion.answer).toLowerCase()
+    const isCorrect = !wasTimeout && (normalized === correctAnswer)
+    try {
+      await persistQuizOutcome(db, user.uid, user.displayName || user.email, pendingSpin, quizQuestion, isCorrect)
+      window.dispatchEvent(new Event('reload-top10'))
+  // Feedback visual
+  setFeedbackOk(isCorrect)
+  setFeedbackExplain(isCorrect ? '' : (quizQuestion.explain || ''))
+  setShowFeedback(true)
+      setQuizOpen(false)
+      setQuizQuestion(null)
+      setPendingSpin(null)
+      // Refrescar myStats de forma optimista
+      setMyStats((prev)=>{
+        const delta = isCorrect ? pendingSpin.points : -pendingSpin.points
+        return prev ? { ...prev, totalScore: (prev.totalScore||0) + delta, totalSpins: (prev.totalSpins||0)+1 } : prev
+      })
+      setUsedQuestionIds(prev => new Set(prev).add(quizQuestion.id))
+    } catch (e) {
+      console.error('persistQuizOutcome failed', e)
+      setQuizOpen(false)
+      setQuizQuestion(null)
+      setPendingSpin(null)
+    }
+  }, [db, user, quizQuestion, pendingSpin])
 
   const salir = async ()=>{ try{ await signOut(auth) } catch(e){ console.error(e) } }
 
@@ -173,7 +221,7 @@ export default function App(){
                   </div>
                 </div>
 
-                <Wheel onResult={onSpinResult} />
+                <Wheel onResult={onSpinResult} disabled={quizOpen} />
 
                 {lastResult && (
                   <div style={{marginTop:12, padding:10, border:'1px dashed #3f3f46', borderRadius:10}}>
@@ -185,6 +233,15 @@ export default function App(){
               <Modal open={showLbModal} title="Top 10 jugadores" onClose={()=>setShowLbModal(false)}>
                 <Leaderboard db={db} currentUser={user} myStats={myStats} />
               </Modal>
+
+              <QuestionModal
+                open={quizOpen}
+                onClose={()=>setQuizOpen(false)}
+                question={quizQuestion}
+                points={pendingSpin?.points}
+                category={pendingSpin?.label}
+                onAnswer={handleQuizAnswer}
+              />
             </>
           )
           : (
@@ -195,7 +252,7 @@ export default function App(){
                   {profileError && <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:8,marginBottom:8,fontSize:12,marginLeft:8}}>{profileError}</div>}
                 </div>
 
-                <Wheel onResult={onSpinResult} />
+                <Wheel onResult={onSpinResult} disabled={quizOpen} />
 
                 {lastResult && (
                   <div style={{marginTop:12, padding:10, border:'1px dashed #3f3f46', borderRadius:10}}>
@@ -206,9 +263,27 @@ export default function App(){
 
               {/* Derecha: Top10; si no estás en top, aparece tu fila con posición global */}
               <Leaderboard db={db} currentUser={user} myStats={myStats} />
+
+              <QuestionModal
+                open={quizOpen}
+                onClose={()=>setQuizOpen(false)}
+                question={quizQuestion}
+                points={pendingSpin?.points}
+                category={pendingSpin?.label}
+                onAnswer={handleQuizAnswer}
+              />
             </div>
           )
         )}
+        <AnswerFeedback
+          open={showFeedback}
+          correct={feedbackOk}
+          explain={feedbackExplain}
+          onClose={()=>setShowFeedback(false)}
+          durationMs={feedbackOk ? 2000 : 10000}
+          dismissable={!feedbackOk}
+          pointsDelta={lastResult?.points || 0}
+        />
       </main>
     </div>
   )
