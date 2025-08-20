@@ -12,6 +12,16 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
   const [skipping, setSkipping] = useState(false) // cerrar con X
   const timerRef = useRef(null)
 
+  // Puntaje ajustado en tiempo real (debe ir después de definir seconds)
+  const getMultiplier = (s) => {
+    if (s <= 5) return 0.5
+    if (s <= 10) return 0.75
+    return 1
+  }
+  const multiplier = getMultiplier(seconds)
+  const adjustedPoints = points ? Math.max(1, Math.round(points * multiplier)) : 0
+  const showRealPoints = seconds <= 20 && points > 0
+
   const canSubmit = useMemo(() => {
     if (!question) return false
     if (isTF) return value === 'true' || value === 'false'
@@ -82,7 +92,14 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
     <div className="modal-backdrop" role="dialog" aria-modal="true" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',display:'grid',placeItems:'center',zIndex:50}}>
       <div className="modal-card" aria-busy={locked} style={{width:'min(560px, 92vw)',background:'#111827',border:'1px solid #3f3f46',borderRadius:12,boxShadow:'0 10px 30px #0006',overflow:'hidden', position:'relative'}}>
         <header style={{padding:'12px 16px',borderBottom:'1px solid #27272a',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <h3 style={{margin:0,fontSize:18}}>{t('questionForPoints', points)}</h3>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2}}>
+            <h3 style={{margin:0,fontSize:18}}>{t('questionForPoints', points)}</h3>
+            {showRealPoints && (
+              <span style={{fontSize:14, color:'#8be9e3', fontWeight:600}}>
+                Ahora: {adjustedPoints} punto{adjustedPoints!==1?'s':''} {multiplier<1 && <span style={{color:'#ef4444',fontWeight:500}}>(por tiempo)</span>}
+              </span>
+            )}
+          </div>
           <button
             disabled={locked}
             onClick={() => { if (locked) return; setSkipping(true); setLocked(true); onAnswer?.({ timeout: true }) }}

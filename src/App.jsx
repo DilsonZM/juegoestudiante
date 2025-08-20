@@ -40,6 +40,7 @@ export default function App(){
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackOk, setFeedbackOk] = useState(false)
   const [feedbackExplain, setFeedbackExplain] = useState('')
+  const [lastPointsDelta, setLastPointsDelta] = useState(0)
   const [showSplash, setShowSplash] = useState(true)
   const [splashMsg, setSplashMsg] = useState({ title: 'Bienvenidos', sub: 'al juego de la Ruleta de Datos' })
   const [splashClickThrough, setSplashClickThrough] = useState(false)
@@ -160,6 +161,10 @@ export default function App(){
     if (!quizQuestion || !pendingSpin || !user) { setQuizOpen(false); return }
     const wasTimeout = typeof answer === 'object' && answer?.timeout
     const secondsLeft = typeof answer === 'object' && Number.isFinite(answer?.secondsLeft) ? answer.secondsLeft : undefined
+    // Guardar el secondsLeft en pendingSpin para feedback
+    if (typeof secondsLeft === 'number') {
+      setPendingSpin(prev => prev ? { ...prev, lastSecondsLeft: secondsLeft } : prev)
+    }
     // Normalizar respuesta soportando nuevo shape
     let normalized
     if (quizQuestion.type === 'tf') {
@@ -175,7 +180,8 @@ export default function App(){
       if (secondsLeft <= 5) timeMult = 0.5
       else if (secondsLeft <= 10) timeMult = 0.75
     }
-    const awardedPoints = isCorrect ? Math.max(1, Math.round(pendingSpin.points * timeMult)) : -pendingSpin.points
+  const awardedPoints = isCorrect ? Math.max(1, Math.round(pendingSpin.points * timeMult)) : -pendingSpin.points
+  setLastPointsDelta(awardedPoints)
     try {
   await persistQuizOutcome(db, user.uid, user.displayName || user.email, { ...pendingSpin, points: Math.abs(awardedPoints) }, quizQuestion, isCorrect)
       window.dispatchEvent(new Event('reload-top10'))
@@ -431,7 +437,7 @@ export default function App(){
           onClose={()=>setShowFeedback(false)}
           durationMs={feedbackOk ? 2000 : 10000}
           dismissable={!feedbackOk}
-          pointsDelta={lastResult?.points || 0}
+          pointsDelta={lastPointsDelta}
         />
 
         <StreakModal
