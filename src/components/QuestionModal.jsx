@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import t from '../i18n'
 import { vibrate } from '../utils/sfx'
 
-export default function QuestionModal({ open, onClose, question, points, onAnswer, category }) {
+export default function QuestionModal({ open, question, points, onAnswer, category }) {
   const [value, setValue] = useState('')
   const isTF = question?.type === 'tf'
   const isShort = question?.type === 'short'
@@ -10,6 +10,7 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
   const [locked, setLocked] = useState(false)
   const [clicked, setClicked] = useState(null) // 'true' | 'false'
   const [skipping, setSkipping] = useState(false) // cerrar con X
+  const timerRef = useRef(null)
 
   const canSubmit = useMemo(() => {
     if (!question) return false
@@ -21,20 +22,31 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
   useEffect(() => {
     if (!open) return
     setSeconds(20)
-  setLocked(false)
-  setValue('')
-  setClicked(null)
-  setSkipping(false)
-    const id = setInterval(() => setSeconds((s) => s - 1), 1000)
-    return () => clearInterval(id)
+    setLocked(false)
+    setValue('')
+    setClicked(null)
+    setSkipping(false)
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    timerRef.current = setInterval(() => {
+      setSeconds((s) => s - 1)
+    }, 1000)
+    return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null } }
   }, [open, question?.id])
 
+  // Al bloquear (se respondió/omitió), detener el temporizador
   useEffect(() => {
-    if (seconds === 0) {
-  // Si se acaba el tiempo, penalizar como incorrecto para cualquier tipo
+    if (locked && timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+  }, [locked])
+
+  useEffect(() => {
+    if (seconds === 0 && !locked) {
+      // Si se acaba el tiempo, penalizar como incorrecto para cualquier tipo
       onAnswer?.({ timeout: true, secondsLeft: 0 })
     }
-  }, [seconds, isTF, onAnswer, onClose])
+  }, [seconds, locked, onAnswer])
 
   // Aviso al cruzar a 5s: vibración leve
   useEffect(() => {
