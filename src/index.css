@@ -313,6 +313,27 @@ html, body { overflow-x: hidden; }
   .table-wrap { overflow-x: auto; }
   .table-wrap table { min-width: 520px; }
 }
+
+/* Móvil (teléfono): que la columna "Nombre" sea del ancho del nombre más largo */
+@media (max-width: 680px) {
+  .table-wrap table {
+    width: 100%;
+    table-layout: auto;   /* deja que el navegador mida por contenido */
+    min-width: 0;         /* anula el min-width de otras reglas */
+  }
+  /* 2ª columna = Nombre: compacta al contenido (sin romper en varias líneas) */
+  .table-wrap thead th:nth-child(2),
+  .table-wrap tbody td:nth-child(2) {
+    width: 1%;
+    white-space: nowrap;
+  }
+}
+
+/* Desktop: ruleta ~20% más pequeña y leyenda acorde */
+@media (min-width: 981px) {
+  .wheel-wrap { width: clamp(240px, 90vw, 336px); }
+  .wheel-legend { max-width: 336px; }
+}
 /* ===== Desktop: pegar el auth-card arriba ===== */
 @media (min-width: 981px) {
   /* que la columna derecha NO centre vertical */
