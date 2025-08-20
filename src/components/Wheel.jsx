@@ -36,6 +36,11 @@ export default function Wheel({ onResult, disabled }) {
     }, 3800)
   }
 
+  const handleWheelTap = () => {
+    // Permitir iniciar giro tocando/clickeando la ruleta
+    spin()
+  }
+
   return (
     <div style={{display:'grid',placeItems:'center',gap:12}}>
       <div className="wheel-legend">
@@ -48,7 +53,18 @@ export default function Wheel({ onResult, disabled }) {
         ))}
       </div>
 
-      <div className="wheel-wrap">
+      <div
+        className="wheel-wrap"
+        role="button"
+        aria-label="Ruleta: tocar o presionar para girar"
+        aria-disabled={spinning || disabled}
+        tabIndex={0}
+        onClick={handleWheelTap}
+        onKeyDown={(e)=>{
+          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); handleWheelTap() }
+        }}
+        style={{ cursor: (spinning || disabled) ? 'not-allowed' : 'pointer' }}
+      >
         <div style={{
           position:'absolute', left:'50%', top:-8, transform:'translateX(-50%)',
           width:0, height:0, borderLeft:'12px solid transparent', borderRight:'12px solid transparent',
