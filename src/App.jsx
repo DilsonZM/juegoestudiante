@@ -10,6 +10,9 @@ import { persistQuizOutcome } from './services/gameplay'
 import './index.css'
 import unirLogo from './assets/unir.png'
 import Modal from './components/Modal'
+import SettingsModal from './components/SettingsModal'
+import StreakModal from './components/StreakModal'
+import MobileStatsBar from './components/MobileStatsBar'
 import Logo from './components/Logo'
 import Wheel from './components/Wheel'
 import Leaderboard from './components/Leaderboard'
@@ -328,26 +331,12 @@ export default function App(){
           ? (
             <>
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',rowGap:6}}>
-                  <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-                    <span style={{fontSize:14,opacity:.9}}>Racha: <b>{streak}</b></span>
-                    <span style={{fontSize:14,opacity:.9}}>Puntaje: <b>{myStats?.totalScore ?? 0}</b></span>
-                  </div>
-                  <div style={{display:'flex',alignItems:'center',gap:10}}>
-                    <button
-                      className="btn btn-sm"
-                      onClick={()=>setShowLbModal(true)}
-                      style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', padding:'4px 10px', borderRadius:8}}
-                    >
-                      Top 10
-                    </button>
-                  </div>
-                  {profileError && (
-                    <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:6,fontSize:12,marginLeft:0,marginTop:6}}>
-                      {profileError}
-                    </div>
-                  )}
-                </div>
+                <MobileStatsBar
+                  streak={streak}
+                  score={myStats?.totalScore ?? 0}
+                  profileError={profileError}
+                  onOpenTop10={()=>setShowLbModal(true)}
+                />
 
                 <Wheel
                   onResult={onSpinResult}
@@ -431,49 +420,21 @@ export default function App(){
           pointsDelta={lastResult?.points || 0}
         />
 
-        {/* Modal de racha */}
-        {streakModal.open && (
-          <div onClick={()=>setStreakModal({ open:false, level:0 })} style={{position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'grid', placeItems:'center', zIndex:70}}>
-            <div onClick={e=>e.stopPropagation()} style={{
-              background:'#0b0b0b', border:'1px solid #3f3f46', borderRadius:16, padding:20,
-              boxShadow: '0 14px 40px rgba(0,0,0,.45)', textAlign:'center', width:'min(520px, 92vw)'
-            }}>
-              <div style={{fontSize:22, fontWeight:900, marginBottom:6}}>
-                {streakModal.level === 1 && '🔥 ¡Racha de 3!'}
-                {streakModal.level === 2 && '⚡ ¡Racha de 7!'}
-                {streakModal.level === 3 && (streak >= 10 ? '🏆 ¡Racha 10+!' : '🏆 ¡Racha de 10!')}
-              </div>
-              <div style={{opacity:.9, marginBottom:12}}>¡Sigue así! Racha actual: <b>{streak}</b></div>
-              <button onClick={()=>setStreakModal({ open:false, level:0 })} style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'8px 12px'}}>Continuar</button>
-            </div>
-          </div>
-        )}
+        <StreakModal
+          open={streakModal.open}
+          level={streakModal.level}
+          streak={streak}
+          onClose={()=>setStreakModal({ open:false, level:0 })}
+        />
       </main>
       {isMobile && (
-        <Modal open={showSettings} title="Ajustes" onClose={()=>setShowSettings(false)} hideClose>
-          <div style={{display:'grid', gap:16}}>
-            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-              <span>Sonido</span>
-              <button
-                type="button"
-                onClick={()=>setSoundOn(v=>!v)}
-                className={`switch ${soundOn ? 'on' : ''}`}
-                aria-pressed={soundOn}
-                aria-label="Activar o desactivar sonido"
-              >
-                <span className="switch-knob" />
-              </button>
-            </div>
-
-            <button
-              onClick={()=>{ setShowSettings(false); salir(); }}
-              className="btn"
-              style={{marginTop:4}}
-            >
-              Salir del juego
-            </button>
-          </div>
-        </Modal>
+        <SettingsModal
+          open={showSettings}
+          onClose={()=>setShowSettings(false)}
+          soundOn={soundOn}
+          onToggleSound={()=>setSoundOn(v=>!v)}
+          onExit={salir}
+        />
       )}
     </div>
   )

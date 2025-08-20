@@ -118,27 +118,16 @@ export function sfxSpinTicks(soundOn = true, { durationMs = 3800, totalTicks = 4
   // No vibramos aquí para no duplicar la sensación (ya vibra en sfxSpin)
   if (!soundOn) return
   const total = Math.max(10, totalTicks)
-  const startInterval = 24  // ms, muy rápido al inicio
-  const endInterval = 280   // ms, más lento al final
-  // easing: ease-out cúbico para espaciar más hacia el final
-  const ease = (t) => 1 - Math.pow(1 - t, 3)
-  // Construye tiempos acumulados que caben en durationMs
-  const times = []
-  let acc = 0
+  // easing: ease-out QUINTIC para espaciar MUCHO más hacia el final
+  const ease = (t) => 1 - Math.pow(1 - t, 5)
+  // Programar ticks mapeando linealmente posiciones a tiempos easing
   for (let i = 0; i < total; i++) {
-    const t = i / (total - 1)
-    const interval = startInterval + (endInterval - startInterval) * ease(t)
-    acc += interval
-    times.push(acc)
-  }
-  // Normalizar a durationMs
-  const scale = durationMs / acc
-  times.forEach((t, idx) => {
+    const p = i / (total - 1)
+    const when = Math.max(0, Math.floor(ease(p) * durationMs))
     // Volumen suave, con un ligero pico hacia el último tercio
-    const p = idx / (total - 1)
     const vol = 0.022 + (p > 0.66 ? 0.01 * (p - 0.66) / 0.34 : 0) // ~0.022 → 0.032
-    setTimeout(() => tick({ volume: vol }), Math.floor(t * scale))
-  })
+    setTimeout(() => tick({ volume: vol }), when)
+  }
 }
 
 export function sfxCorrect(soundOn = true) {
