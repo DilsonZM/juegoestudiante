@@ -119,7 +119,7 @@ export function sfxSpinTicks(soundOn = true, { durationMs = 3800, totalTicks = 4
   if (!soundOn) return
   const total = Math.max(10, totalTicks)
     const startInterval = 24   // ms, muy rápido al inicio (igual)
-    const endInterval = 520    // ms, mucho más lento al final (menos frecuencia)
+    const endInterval = 2000    // ms, mucho más lento al final (menos frecuencia)
   // easing: ease-out cúbico para ir ensanchando hacia el final como antes
   const ease = (t) => 1 - Math.pow(1 - t, 3)
   // Construye tiempos acumulados que caben en durationMs
