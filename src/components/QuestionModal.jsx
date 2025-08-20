@@ -8,6 +8,7 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
   const [seconds, setSeconds] = useState(20)
   const [locked, setLocked] = useState(false)
   const [clicked, setClicked] = useState(null) // 'true' | 'false'
+  const [skipping, setSkipping] = useState(false) // cerrar con X
 
   const canSubmit = useMemo(() => {
     if (!question) return false
@@ -22,6 +23,7 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
   setLocked(false)
   setValue('')
   setClicked(null)
+  setSkipping(false)
     const id = setInterval(() => setSeconds((s) => s - 1), 1000)
     return () => clearInterval(id)
   }, [open, question?.id])
@@ -60,7 +62,12 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
       <div className="modal-card" aria-busy={locked} style={{width:'min(560px, 92vw)',background:'#111827',border:'1px solid #3f3f46',borderRadius:12,boxShadow:'0 10px 30px #0006',overflow:'hidden', position:'relative'}}>
         <header style={{padding:'12px 16px',borderBottom:'1px solid #27272a',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <h3 style={{margin:0,fontSize:18}}>{t('questionForPoints', points)}</h3>
-          <button disabled={locked} onClick={onClose} aria-label="Cerrar" style={{background:'transparent',border:0,color:'#e5e7eb',cursor: locked? 'not-allowed' : 'pointer', opacity: locked? .6 : 1}}>✕</button>
+          <button
+            disabled={locked}
+            onClick={() => { if (locked) return; setSkipping(true); setLocked(true); onAnswer?.({ timeout: true }) }}
+            aria-label="Cerrar"
+            style={{background:'transparent',border:0,color:'#e5e7eb',cursor: locked? 'not-allowed' : 'pointer', opacity: locked? .6 : 1}}
+          >✕</button>
         </header>
         <div style={{padding:16,display:'grid',gap:12}}>
           {category && (
@@ -101,14 +108,14 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
             </div>
           )}
 
-          {locked && (
+      {locked && (
             <div style={{
               display:'flex', alignItems:'center', gap:10,
               padding:'8px 10px', border:'1px dashed #334155', borderRadius:8,
               background:'rgba(15,23,42,.35)'
             }}>
               <Spinner />
-              <span style={{fontSize:13, color:'#cbd5e1'}}>Procesando respuesta…</span>
+              <span style={{fontSize:13, color:'#cbd5e1'}}>{skipping ? 'Omitiendo pregunta…' : 'Procesando respuesta…'}</span>
             </div>
           )}
 
