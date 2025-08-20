@@ -61,24 +61,9 @@ export default function Leaderboard({ db, currentUser, myStats }){
     })()
   }, [db, rows, currentUser, myStats?.totalScore])
 
-  const renderRow = (r, i, opts={}) => (
-    <tr key={opts.key || r.id} style={{borderBottom:'1px solid #222', background: opts.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'}}>
-  <td style={{padding:'6px 8px 6px 8px', width:'2.8ch', textAlign:'right'}}>#{i}</td>
-      <td style={{padding: isMobile ? '6px 8px 6px 10px' : '6px 16px 6px 10px'}}>
-        <div style={{ display:'inline-flex', alignItems:'center' }}>
-          <MedalBadge rank={i} />
-          <span>{r.displayName || r.id}</span>
-        </div>
-      </td>
-  <td style={{padding:'6px 8px', textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
-  <td style={{padding:'6px 8px', textAlign:'center'}}>{r.totalSpins || 0}</td>
-    </tr>
-  )
-
   const isLogged = !!currentUser
   const userInTopIndex = isLogged ? rows.findIndex(r => r.id === currentUser.uid) : -1
   const userInTop = userInTopIndex >= 0
-
   const myRowData = isLogged ? {
     id: currentUser.uid,
     displayName: myStats?.displayName || currentUser.displayName || currentUser.email,
@@ -86,8 +71,30 @@ export default function Leaderboard({ db, currentUser, myStats }){
     totalSpins: myStats?.totalSpins || 0
   } : null
 
+  const renderRow = (r, i, opts={}) => (
+    <tr key={opts.key || r.id} style={{borderBottom:'1px solid #222', background: opts.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'}}>
+      <td style={{padding:'6px 8px 6px 8px', width:'2.8ch', textAlign:'right'}}>#{i}</td>
+  <td style={{padding: isMobile ? '6px 14px 6px 10px' : '6px 24px 6px 10px'}}>
+        <div style={{ display:'inline-flex', alignItems:'center', minWidth:0 }}>
+          <MedalBadge rank={i} />
+          <span style={{
+    display:'inline-block',
+    maxWidth: 'unset',
+    overflow: 'visible',
+    textOverflow: 'clip',
+    whiteSpace: 'nowrap',
+    wordBreak: 'keep-all',
+    overflowWrap: 'normal'
+          }}>{r.displayName || r.id}</span>
+        </div>
+      </td>
+  <td style={{padding:'6px 8px', textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
+  <td style={{padding:'6px 8px', textAlign:'center'}}>{r.totalSpins || 0}</td>
+    </tr>
+  )
+
   return (
-    <div style={{border:'1px solid #333',borderRadius:12,padding:16}}>
+    <div style={{border:'1px solid #333',borderRadius:12,padding:16, maxWidth: 1024, margin: '0 auto'}}>
       <div style={{display:'flex',alignItems:'center',marginBottom:8}}>
         <b style={{flex:1}}>Top 10 (Total Score)</b>
         <button
@@ -107,7 +114,7 @@ export default function Leaderboard({ db, currentUser, myStats }){
           <thead>
             <tr style={{textAlign:'left',opacity:.9}}>
               <th style={{padding:'6px 8px 6px 8px',borderBottom:'1px solid #333', width:'2.8ch', textAlign:'right'}}>#</th>
-              <th style={{padding: isMobile ? '6px 8px 6px 10px' : '6px 16px 6px 10px',borderBottom:'1px solid #333'}}>Nombre</th>
+              <th style={{padding: isMobile ? '6px 14px 6px 10px' : '6px 24px 6px 10px',borderBottom:'1px solid #333'}}>Nombre</th>
               <th style={{padding:'6px 8px',borderBottom:'1px solid #333', textAlign:'center'}}>Score total</th>
               <th style={{padding:'6px 8px',borderBottom:'1px solid #333', textAlign:'center'}}>Giros totales</th>
             </tr>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { sfxSpin, sfxSpinTicks } from '../utils/sfx'
 import { calcWheelFontSize, midPointOnArc, polarToCartesian } from '../utils/wheelMath'
 
 const SEGMENTS = [
@@ -12,7 +13,7 @@ const SEGMENTS = [
   { label: 'Interoperabilidad', points: 6,  color: '#22d3ee' },
 ]
 
-export default function Wheel({ onResult, disabled, onBeforeFirstSpin }) {
+export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn = true }) {
   const [spinning, setSpinning] = useState(false)
   const [angle, setAngle] = useState(0)
   const [started, setStarted] = useState(false)
@@ -27,18 +28,25 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin }) {
       setStarted(true)
     }
     setSpinning(true)
-    const turns = 5 + Math.floor(Math.random() * 4)
-    const idx = Math.floor(Math.random() * SEGMENTS.length)
-    const finalDeg = turns * 360 + (SEGMENTS.length - idx) * segAngle - segAngle / 2
+    try {
+      sfxSpin(soundOn)
+    } catch { /* noop */ }
+  const turns = 5 + Math.floor(Math.random() * 4)
+  const idx = Math.floor(Math.random() * SEGMENTS.length)
+  const finalDeg = turns * 360 + (SEGMENTS.length - idx) * segAngle - segAngle / 2
+  // Aproximar cantidad de veces que pasamos por un divisor de segmento para sincronizar ticks
+  const approxTicks = Math.max(8, Math.floor(finalDeg / segAngle))
     const newAngle = angle + finalDeg
     setAngle(newAngle)
-    setTimeout(() => {
+  setTimeout(() => {
       setSpinning(false)
       const normalized = ((newAngle % 360) + 360) % 360
       const pickedIndex = (SEGMENTS.length - Math.floor((normalized + segAngle / 2) / segAngle)) % SEGMENTS.length
       const result = SEGMENTS[pickedIndex]
       onResult?.(result)
     }, 3800)
+  // Reproducir ticks desacelerando durante todo el giro
+  try { sfxSpinTicks(soundOn, { durationMs: 3800, totalTicks: approxTicks }) } catch { /* noop */ }
   }
 
   const handleWheelTap = () => { spin() }

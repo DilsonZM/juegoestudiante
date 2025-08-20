@@ -19,6 +19,12 @@ export const baseByCat = {
   { id: 'cal13', type: 'tf', text: 'Eliminar validaciones acelera y mantiene la calidad estable.', answer: false, explain: 'Quitar controles aumenta errores y retrabajo; baja la calidad.' },
   { id: 'cal14', type: 'tf', text: 'La consistencia entre sistemas es opcional si el equipo se comunica bien.', answer: false, explain: 'La inconsistencia genera decisiones distintas sobre la misma información.' },
   { id: 'cal15', type: 'tf', text: 'No es necesario medir la calidad si los usuarios están conformes.', answer: false, explain: 'Medir permite detectar y corregir problemas de forma objetiva.' },
+  // Nuevas para completar 20 (2 verdaderas, 3 falsas)
+  { id: 'cal16', type: 'tf', text: 'Definir umbrales y KPI de calidad permite monitorear desviaciones.', answer: true, explain: 'Indicadores objetivos ayudan a detectar y priorizar correcciones.' },
+  { id: 'cal17', type: 'tf', text: 'La calidad de datos es responsabilidad exclusiva del área de TI.', answer: false, explain: 'Es responsabilidad compartida con el negocio (propietarios y stewards).' },
+  { id: 'cal18', type: 'tf', text: 'Muestreos y controles estadísticos ayudan a detectar anomalías en los datos.', answer: true, explain: 'El control estadístico permite encontrar errores sistemáticos o atípicos.' },
+  { id: 'cal19', type: 'tf', text: 'Los datos maestros no requieren reglas de deduplicación.', answer: false, explain: 'La deduplicación es clave para evitar registros duplicados en maestros.' },
+  { id: 'cal20', type: 'tf', text: 'Mejorar la calidad una vez al año es suficiente para cualquier organización.', answer: false, explain: 'La mejora continua es necesaria; la calidad cambia con los procesos.' },
   // Reserva off-topic por si se agotan las preguntas
   { id: 'calx11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Hacer pausas al estudiar ayuda a retener mejor.', answer: true, explain: 'Las pausas mejoran la atención y la memoria.' },
   { id: 'calx12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Es recomendable desactivar todas las validaciones para ir más rápido.', answer: false, explain: 'Quitar validaciones aumenta errores y baja la calidad.' },
@@ -40,6 +46,12 @@ export const baseByCat = {
   { id: 'seg13', type: 'tf', text: 'Compartir accesos administrativos entre varias personas mejora el control.', answer: false, explain: 'Las cuentas personales trazables son clave para la responsabilidad.' },
   { id: 'seg14', type: 'tf', text: 'Los logs de seguridad no aportan valor para detectar incidentes.', answer: false, explain: 'La observabilidad es esencial para detectar y responder incidentes.' },
   { id: 'seg15', type: 'tf', text: 'El cifrado hace que las copias de respaldo sean innecesarias.', answer: false, explain: 'Respaldo y cifrado cubren riesgos distintos: pérdida vs. confidencialidad.' },
+  // Nuevas para completar 20 (2 verdaderas, 3 falsas)
+  { id: 'seg16', type: 'tf', text: 'La segregación de funciones reduce el riesgo de fraude interno.', answer: true, explain: 'Separar tareas críticas evita que una sola persona complete todo el flujo.' },
+  { id: 'seg17', type: 'tf', text: 'Usar HTTPS en una intranet es innecesario.', answer: false, explain: 'El cifrado en tránsito protege contra escuchas incluso en redes internas.' },
+  { id: 'seg18', type: 'tf', text: 'Las soluciones DLP ayudan a prevenir fuga de información.', answer: true, explain: 'Data Loss Prevention detecta y bloquea exfiltraciones no autorizadas.' },
+  { id: 'seg19', type: 'tf', text: 'No es relevante bloquear la pantalla en ausencias cortas.', answer: false, explain: 'Bloquear la sesión evita accesos no autorizados incluso por segundos.' },
+  { id: 'seg20', type: 'tf', text: 'El phishing se evita instalando más antivirus.', answer: false, explain: 'El antivirus no sustituye la concienciación ni filtros antiphishing.' },
   // Reserva off-topic
   { id: 'segx11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Usar Wi‑Fi público sin protección es seguro para datos sensibles.', answer: false, explain: 'Las redes públicas pueden ser interceptadas; evita enviar información sensible.' },
   { id: 'segx12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Mantener el sistema operativo actualizado mejora la seguridad.', answer: true, explain: 'Las actualizaciones corrigen vulnerabilidades.' },
@@ -61,6 +73,12 @@ export const baseByCat = {
   { id: 'pri13', type: 'tf', text: 'La seudonimización garantiza que nadie pueda reidentificar.', answer: false, explain: 'Puede reidentificarse con datos auxiliares; no equivale a anonimizar.' },
   { id: 'pri14', type: 'tf', text: 'Los derechos de los titulares pueden ignorarse si es costoso atenderlos.', answer: false, explain: 'Los derechos aplican conforme a la normativa; el costo no los invalida.' },
   { id: 'pri15', type: 'tf', text: 'El principio de minimización permite recolectar “por si acaso”.', answer: false, explain: 'Recolectar solo lo necesario para fines específicos.' },
+  // Nuevas para completar 20 (3 verdaderas, 2 falsas)
+  { id: 'pri16', type: 'tf', text: 'Las evaluaciones de impacto en privacidad (PIA/DPIA) ayudan a identificar riesgos.', answer: true, explain: 'Permiten diseñar mitigaciones antes de implementar el tratamiento.' },
+  { id: 'pri17', type: 'tf', text: 'El titular puede solicitar la supresión de sus datos en ciertos casos.', answer: true, explain: 'El derecho de supresión aplica cuando desaparece la finalidad u otros supuestos.' },
+  { id: 'pri18', type: 'tf', text: 'Las cookies siempre pueden instalarse sin informar al usuario.', answer: false, explain: 'Se debe informar y, en su caso, recabar consentimiento.' },
+  { id: 'pri19', type: 'tf', text: 'Debe mantenerse un registro de consentimientos otorgados y su alcance.', answer: true, explain: 'La trazabilidad del consentimiento es necesaria para demostrar licitud.' },
+  { id: 'pri20', type: 'tf', text: 'Es válido compartir datos personales con terceros sin contrato ni garantías.', answer: false, explain: 'Se requieren acuerdos y garantías de protección adecuadas.' },
   // Reserva off-topic
   { id: 'prix11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Configurar privacidad en redes sociales limita quién ve tu información.', answer: true, explain: 'Ajustar visibilidad protege tus datos personales.' },
   { id: 'prix12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Compartir tu ubicación en tiempo real siempre es seguro.', answer: false, explain: 'Compartir ubicación aumenta riesgos si no se controla.' },
@@ -82,6 +100,12 @@ export const baseByCat = {
   { id: 'cat13', type: 'tf', text: 'Actualizar metadatos no es necesario si el dataset cambia poco.', answer: false, explain: 'La vigencia de metadatos es clave para la confianza y el reuso.' },
   { id: 'cat14', type: 'tf', text: 'Los responsables de datos no deben figurar en el catálogo.', answer: false, explain: 'El contacto/responsable facilita soporte y decisiones.' },
   { id: 'cat15', type: 'tf', text: 'Un catálogo sin control de calidad funciona igual que uno curado.', answer: false, explain: 'La curaduría mejora utilidad, precisión y adopción.' },
+  // Nuevas para completar 20 (2 verdaderas, 3 falsas)
+  { id: 'cat16', type: 'tf', text: 'Definir campos obligatorios en metadatos mejora la calidad del catálogo.', answer: true, explain: 'Obligatoriedad mínima evita registros incompletos o ambiguos.' },
+  { id: 'cat17', type: 'tf', text: 'La búsqueda semántica nunca aporta valor en catálogos.', answer: false, explain: 'Puede mejorar el descubrimiento al entender intención y sinónimos.' },
+  { id: 'cat18', type: 'tf', text: 'No es necesario versionar datasets publicados.', answer: false, explain: 'El versionado permite reproducibilidad y comunicación de cambios.' },
+  { id: 'cat19', type: 'tf', text: 'Métricas de uso ayudan a priorizar mejoras en metadatos y datasets.', answer: true, explain: 'El uso real orienta dónde invertir esfuerzos de curaduría.' },
+  { id: 'cat20', type: 'tf', text: 'El catálogo debe almacenar los datos, no solo metadatos.', answer: false, explain: 'El catálogo referencia y documenta; no reemplaza los repositorios de datos.' },
   // Reserva off-topic
   { id: 'catx11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Mantener ordenadas carpetas personales no influye en catálogos de datos.', answer: false, explain: 'El orden personal también inspira mejores prácticas organizacionales.' },
   { id: 'catx12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Una buena documentación acelera el aprendizaje de herramientas.', answer: true, explain: 'Documentar reduce curva de aprendizaje.' },
@@ -103,6 +127,12 @@ export const baseByCat = {
   { id: 'pro13', type: 'tf', text: 'El owner puede transferir la rendición de cuentas a cualquier rol.', answer: false, explain: 'Puede delegar tareas, no la responsabilidad final.' },
   { id: 'pro14', type: 'tf', text: 'No es necesario documentar reemplazos del owner en vacaciones.', answer: false, explain: 'Definir sustitutos evita bloqueos operativos.' },
   { id: 'pro15', type: 'tf', text: 'Un RACI complejo siempre es mejor que un RACI simple.', answer: false, explain: 'La claridad prima sobre la complejidad; evita confusión.' },
+  // Nuevas para completar 20 (3 verdaderas, 2 falsas)
+  { id: 'pro16', type: 'tf', text: 'Definir KPI de calidad por cada owner ayuda a rendir cuentas.', answer: true, explain: 'Los indicadores facilitan seguimiento y priorización de mejoras.' },
+  { id: 'pro17', type: 'tf', text: 'Cambiar el owner de un dato cada semana mejora la agilidad.', answer: false, explain: 'La rotación frecuente genera confusión y diluye responsabilidades.' },
+  { id: 'pro18', type: 'tf', text: 'Los comités de datos ayudan a resolver conflictos y tomar decisiones.', answer: true, explain: 'Gobernanza colegiada alinea áreas y acelera acuerdos.' },
+  { id: 'pro19', type: 'tf', text: 'La rendición de cuentas no aplica a datos no críticos.', answer: false, explain: 'Todos los datos requieren responsables con rendición de cuentas.' },
+  { id: 'pro20', type: 'tf', text: 'Documentar roles en el catálogo mejora la visibilidad de responsables.', answer: true, explain: 'Permite ubicar owners/stewards y solicitar soporte.' },
   // Reserva off-topic
   { id: 'prox11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Un cronograma claro ayuda a coordinar proyectos.', answer: true, explain: 'La planificación mejora la ejecución.' },
   { id: 'prox12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Las reuniones sin agenda suelen ser eficientes.', answer: false, explain: 'La agenda mejora foco y tiempos.' },
@@ -124,6 +154,12 @@ export const baseByCat = {
   { id: 'tra13', type: 'tf', text: 'Las transformaciones manuales no necesitan trazabilidad.', answer: false, explain: 'Toda transformación relevante debe quedar registrada.' },
   { id: 'tra14', type: 'tf', text: 'Versionar scripts es innecesario si hay backups.', answer: false, explain: 'Versionado y backup resuelven problemas distintos.' },
   { id: 'tra15', type: 'tf', text: 'El linaje no ayuda a resolver discrepancias entre reportes.', answer: false, explain: 'Permite ubicar dónde cambió el dato y por qué.' },
+  // Nuevas para completar 20 (2 verdaderas, 3 falsas)
+  { id: 'tra16', type: 'tf', text: 'Capturar el ID de ejecución y parámetros mejora la reproducibilidad.', answer: true, explain: 'Permite repetir un proceso con exactitud y auditarlo.' },
+  { id: 'tra17', type: 'tf', text: 'El linaje puede omitirse en pipelines por lotes (batch).', answer: false, explain: 'Batch o streaming, el linaje sigue siendo necesario para auditar.' },
+  { id: 'tra18', type: 'tf', text: 'Automatizar la captura de linaje en ETL/ELT facilita auditorías.', answer: true, explain: 'Reduce errores manuales y mejora cobertura del linaje.' },
+  { id: 'tra19', type: 'tf', text: 'No hace falta registrar versiones de las fuentes de datos.', answer: false, explain: 'Las versiones permiten rastrear cambios e impactos.' },
+  { id: 'tra20', type: 'tf', text: 'Los catálogos no deben incluir información de linaje.', answer: false, explain: 'Linaje + metadatos en el catálogo incrementan la confianza y trazabilidad.' },
   // Reserva off-topic
   { id: 'trax11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Anotar pasos a mano puede ayudar a recordar cambios.', answer: true, explain: 'Registrar pasos evita olvidar decisiones.' },
   { id: 'trax12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Los historiales de edición no sirven para aprender de errores.', answer: false, explain: 'Revisar historial ayuda a mejorar procesos.' },
@@ -145,6 +181,12 @@ export const baseByCat = {
   { id: 'pol13', type: 'tf', text: 'Las excepciones nunca deben documentarse.', answer: false, explain: 'Documentarlas permite controlarlas y aprender de ellas.' },
   { id: 'pol14', type: 'tf', text: 'Medir cumplimiento puede omitirse si no hay auditorías externas.', answer: false, explain: 'La mejora continua requiere medición, haya o no auditorías.' },
   { id: 'pol15', type: 'tf', text: 'Las políticas no aplican a proveedores ni terceros.', answer: false, explain: 'Alcance y obligaciones deben incluir terceros.' },
+  // Nuevas para completar 20 (3 verdaderas, 2 falsas)
+  { id: 'pol16', type: 'tf', text: 'Las políticas deben alinearse con leyes y regulaciones vigentes.', answer: true, explain: 'El marco normativo guía el contenido y su aplicación.' },
+  { id: 'pol17', type: 'tf', text: 'No hace falta publicar las políticas a los usuarios afectados.', answer: false, explain: 'La comunicación y disponibilidad son requisitos para el cumplimiento.' },
+  { id: 'pol18', type: 'tf', text: 'Debe definirse el proceso de aprobación y control de excepciones.', answer: true, explain: 'Las excepciones controladas requieren trazabilidad y responsables.' },
+  { id: 'pol19', type: 'tf', text: 'Las políticas pueden ser contradictorias entre sí sin problema.', answer: false, explain: 'La coherencia es clave para evitar ambigüedad e incumplimientos.' },
+  { id: 'pol20', type: 'tf', text: 'Revisiones periódicas por un comité aseguran vigencia y efectividad.', answer: true, explain: 'La gobernanza debe mantenerlas actualizadas y efectivas.' },
   // Reserva off-topic
   { id: 'polx11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Tener normas de convivencia mejora el trabajo en equipo.', answer: true, explain: 'Reglas claras facilitan colaboración.' },
   { id: 'polx12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Las reglas claras empeoran la comunicación.', answer: false, explain: 'Claridad mejora la comunicación.' },
@@ -166,6 +208,12 @@ export const baseByCat = {
   { id: 'int13', type: 'tf', text: 'Cambiar un campo en la API sin comunicar no afecta a los clientes.', answer: false, explain: 'Es ruptura silenciosa; se debe versionar y comunicar.' },
   { id: 'int14', type: 'tf', text: 'Las pruebas de contrato sobran cuando hay tests unitarios.', answer: false, explain: 'Validan la compatibilidad entre servicios, no solo lógica interna.' },
   { id: 'int15', type: 'tf', text: 'Los esquemas no deben validar tipos para evitar rechazos.', answer: false, explain: 'Validar tipos previene errores de interpretación y fallos.' },
+  // Nuevas para completar 20 (2 verdaderas, 3 falsas)
+  { id: 'int16', type: 'tf', text: 'Definir OpenAPI/JSON Schema facilita integraciones consistentes.', answer: true, explain: 'Contratos claros reducen rupturas y malentendidos.' },
+  { id: 'int17', type: 'tf', text: 'La codificación de caracteres (p. ej., UTF-8) es irrelevante para integrar.', answer: false, explain: 'Acordar codificación evita errores de caracteres y datos corruptos.' },
+  { id: 'int18', type: 'tf', text: 'Las pruebas de compatibilidad hacia atrás ayudan en cambios de API.', answer: true, explain: 'Garantizan que clientes antiguos sigan funcionando.' },
+  { id: 'int19', type: 'tf', text: 'Se pueden cambiar nombres de campos en producción sin previo aviso.', answer: false, explain: 'Es ruptura; se debe versionar y comunicar cambios.' },
+  { id: 'int20', type: 'tf', text: 'No es necesario documentar límites de tasa (rate limits) ni tiempos de respuesta.', answer: false, explain: 'Son parte del contrato de servicio y su SLO.' },
   // Reserva off-topic
   { id: 'intx11', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Nombres claros en variables ayudan a entender el código.', answer: true, explain: 'Claridad mejora mantenimiento.' },
   { id: 'intx12', type: 'tf', offTopic: true, text: 'Nota: esta pregunta está un poco salida del tema (reserva). Copiar y pegar datos a mano siempre es mejor que automatizar.', answer: false, explain: 'La automatización reduce errores humanos.' },

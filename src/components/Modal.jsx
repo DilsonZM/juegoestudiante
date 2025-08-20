@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function Modal({ open, title, onClose, children }) {
+export default function Modal({ open, title, onClose, children, hideClose = false }) {
   if (!open) return null
   return (
     <div
@@ -23,11 +23,13 @@ export default function Modal({ open, title, onClose, children }) {
       >
         <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderBottom:'1px solid #222'}}>
           <strong style={{fontSize:16}}>{title}</strong>
-          <button
-            onClick={onClose}
-            className="btn btn-sm"
-            style={{marginLeft:'auto',borderRadius:8,border:'1px solid var(--stroke)',background:'#18181b',color:'#fafafa',padding:'6px 10px'}}
-          >Cerrar</button>
+          {!hideClose && (
+            <button
+              onClick={onClose}
+              className="btn btn-sm"
+              style={{marginLeft:'auto',borderRadius:8,border:'1px solid var(--stroke)',background:'#18181b',color:'#fafafa',padding:'6px 10px'}}
+            >Cerrar</button>
+          )}
         </div>
         <div style={{padding:12}}>
           {children}

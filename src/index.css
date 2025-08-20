@@ -238,7 +238,11 @@ body{
 }
 
 /* Tabla: scroll horizontal si se achica */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; max-width:100%; }
+/* Evita que la tabla rompa el contenedor/modal */
+.table-wrap table { width:100%; border-collapse:collapse; }
+.table-wrap tr { box-sizing:border-box; }
+.table-wrap th, .table-wrap td { box-sizing:border-box; }
 /* .table-wrap table { min-width: 520px; }  <-- lo movemos a móvil abajo */
 
 /* ===== MODO COMPACTO MÓVIL ===== */
@@ -250,15 +254,20 @@ body{
   .btn.btn-sm { padding: 4px 8px; font-size: 13px; }
   .wheel-wrap { width: min(92vw, 360px); }
   .wheel-legend { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-  /* Tabla móvil compacta: SIN min-width ni scroll, con wrap */
-  .table-wrap { overflow-x: visible; }
+  /* Tabla móvil: PERMITIR scroll horizontal si es necesario y evitar cortes de nombres */
+  .table-wrap { overflow-x: hidden; }
   .table-wrap table { font-size: 13px; min-width: 0; width: 100%; table-layout: auto; }
-  .table-wrap th, .table-wrap td { white-space: normal; }
+  .table-wrap th, .table-wrap td { white-space: nowrap; }
   /* Centrar columnas numéricas (3 y 4) */
   .table-wrap thead th:nth-child(3),
   .table-wrap thead th:nth-child(4),
   .table-wrap tbody td:nth-child(3),
   .table-wrap tbody td:nth-child(4) { text-align: center; }
+  /* Nombre: no cortar, dejar que haga scroll horizontal si es muy largo */
+  .table-wrap thead th:nth-child(2),
+  .table-wrap tbody td:nth-child(2) {
+    white-space: nowrap;
+  }
 }
 
 /* ===== Leyenda de la ruleta (estilos base desktop) ===== */
@@ -289,6 +298,21 @@ body{
 /* Centrar la ruleta y evitar scroll lateral fantasma */
 .wheel-wrap{ margin-inline:auto; }
 html, body { overflow-x: hidden; }
+
+/* Switch minimal (para el modal de Ajustes) */
+.switch{
+  --w: 42px; --h: 24px;
+  position: relative; width: var(--w); height: var(--h);
+  border-radius: 999px; border:1px solid var(--stroke);
+  background: #18181b; cursor: pointer; padding:0; outline: none;
+  display:inline-flex; align-items:center;
+}
+.switch .switch-knob{
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #eaeaea; position: relative; left: 3px; transition: transform .2s ease;
+}
+.switch.on{ background: linear-gradient(90deg, var(--brand), var(--brand-2)); border-color: transparent; }
+.switch.on .switch-knob{ transform: translateX(calc(var(--w) - 18px - 6px)); background:#08211f }
 
 /* ===== Splash (pantalla de bienvenida) ===== */
 .splash-overlay{
@@ -346,14 +370,20 @@ html, body { overflow-x: hidden; }
   max-width: none;        /* sin límite: ancho según el nombre más largo */
   overflow: visible;
   text-overflow: clip;
+  width: auto;            /* deja que la columna se expanda */
   }
 }
 
 /* Móvil: tabla compacta sin scroll horizontal, con wrap */
 @media (max-width: 980px) {
-  .table-wrap { overflow-x: visible; }
+  .table-wrap { overflow-x: hidden; }
   .table-wrap table { min-width: 0; width: 100%; table-layout: auto; }
-  .table-wrap th, .table-wrap td { white-space: normal; }
+  .table-wrap th, .table-wrap td { white-space: nowrap; }
+  /* Forzar columnas numéricas compactas para ceder espacio a Nombre */
+  .table-wrap thead th:nth-child(3),
+  .table-wrap tbody td:nth-child(3) { width: 5ch; text-align:center; }
+  .table-wrap thead th:nth-child(4),
+  .table-wrap tbody td:nth-child(4) { width: 4ch; text-align:center; }
   /* # angosto y a la derecha */
   .table-wrap thead th:first-child,
   .table-wrap tbody td:first-child { width: 2.8ch; text-align: right; }
@@ -362,6 +392,9 @@ html, body { overflow-x: hidden; }
   .table-wrap thead th:nth-child(4),
   .table-wrap tbody td:nth-child(3),
   .table-wrap tbody td:nth-child(4) { text-align: center; }
+  /* Encabezados numéricos: permitir wrap para ahorrar ancho */
+  .table-wrap thead th:nth-child(3),
+  .table-wrap thead th:nth-child(4) { white-space: normal; line-height: 1.1; }
 }
 
 /* Móvil (teléfono): permitir que "Nombre" haga wrap para no provocar scroll */
@@ -522,11 +555,7 @@ html, body { overflow-x: hidden; }
 /* Desktop: tabla más flexible y "Nombre" más ancho */
 @media (min-width: 981px) {
   .table-wrap { overflow-x: visible; }
-  .table-wrap table {
-  width: 100%;
-  table-layout: fixed;   /* ancho estable de columnas */
-  border-collapse: collapse; /* control exacto del espacio entre celdas */
-  }
+  .table-wrap table { width: 100%; table-layout: auto; border-collapse: collapse; }
   /* por defecto, no wraps raros en otras celdas */
   .table-wrap th,
   .table-wrap td {
@@ -543,24 +572,27 @@ html, body { overflow-x: hidden; }
   /* columna "Nombre" (2ª): permitir salto y darle más ancho máximo */
   .table-wrap thead th:nth-child(2),
   .table-wrap tbody td:nth-child(2) {
-  white-space: nowrap;     /* no romper el nombre en varias líneas */
-  max-width: none;         /* sin límite para ver el nombre completo */
-  text-overflow: clip;
+    white-space: nowrap;     /* mantener en una línea (como móvil) */
   overflow: visible;
+  text-overflow: clip;     /* no usar elipsis */
   padding-left: 14px;      /* deja ~2 espacios respecto al # */
-  padding-right: 28px;     /* más espacio hacia "Score total" */
+    padding-right: 24px;     /* espacio hacia "Score total" */
   }
   /* Centrar columnas 3 y 4 (Score total, Giros totales) */
   .table-wrap thead th:nth-child(3),
   .table-wrap thead th:nth-child(4),
   .table-wrap tbody td:nth-child(3),
-  .table-wrap tbody td:nth-child(4) {
-    text-align: center;
-  }
+  .table-wrap tbody td:nth-child(4) { text-align: center; }
+  /* Columnas numéricas compactas para ceder espacio a "Nombre" */
+  .table-wrap thead th:nth-child(3),
+  .table-wrap tbody td:nth-child(3) { width: 7ch; }
+  .table-wrap thead th:nth-child(4),
+  .table-wrap tbody td:nth-child(4) { width: 6ch; }
   /* Permitir wrap en los títulos de 3 y 4 para caber mejor */
   .table-wrap thead th:nth-child(3),
   .table-wrap thead th:nth-child(4) {
     white-space: normal;
     line-height: 1.1;
   }
+  /* (sin 5ª columna) */
 }

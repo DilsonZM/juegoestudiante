@@ -16,6 +16,7 @@ import Leaderboard from './components/Leaderboard'
 import AuthPanel from './components/AuthPanel'
 import AnswerFeedback from './components/AnswerFeedback'
 import Splash from './components/Splash'
+import { sfxCorrect, sfxWrong, sfxStreak } from './utils/sfx'
 
 // (componentes inline eliminados; ahora se importan desde ./components)
 
@@ -41,6 +42,12 @@ export default function App(){
   const [splashClickThrough, setSplashClickThrough] = useState(false)
   const splashTimerRef = useRef(null)
   const splashIdRef = useRef(0)
+
+  // Sonido y rachas
+  const [soundOn, setSoundOn] = useState(true)
+  const [streak, setStreak] = useState(0)
+  const [streakModal, setStreakModal] = useState({ open: false, level: 0 })
+  const [showSettings, setShowSettings] = useState(false)
 
   const showSplashFor = useCallback((ms, title, sub, clickThrough = false) => {
     // Cancela timer previo y genera un id; solo el último id puede ocultar el splash
@@ -153,19 +160,33 @@ export default function App(){
     const correctAnswer = quizQuestion.type === 'tf' ? Boolean(quizQuestion.answer) : String(quizQuestion.answer).toLowerCase()
     const isCorrect = !wasTimeout && (normalized === correctAnswer)
     try {
-      await persistQuizOutcome(db, user.uid, user.displayName || user.email, pendingSpin, quizQuestion, isCorrect)
+  await persistQuizOutcome(db, user.uid, user.displayName || user.email, pendingSpin, quizQuestion, isCorrect)
       window.dispatchEvent(new Event('reload-top10'))
-  // Feedback visual
-  setFeedbackOk(isCorrect)
-  setFeedbackExplain(isCorrect ? '' : (quizQuestion.explain || ''))
-  setShowFeedback(true)
+      // Feedback visual + SFX
+      setFeedbackOk(isCorrect)
+      setFeedbackExplain(isCorrect ? '' : (quizQuestion.explain || ''))
+      setShowFeedback(true)
+      try { (isCorrect ? sfxCorrect : sfxWrong)(soundOn) } catch { /* ignore */ }
+
+      // Rachas
+      setStreak(prev => {
+        const next = isCorrect ? prev + 1 : 0
+        // Hit milestones: 3, 7, >10
+        if (isCorrect && (next === 3 || next === 7 || next === 10 || next > 10)) {
+          const level = next >= 10 ? 3 : next >= 7 ? 2 : 1
+          setStreakModal({ open: true, level })
+          try { sfxStreak(soundOn, level) } catch { /* ignore */ }
+        }
+        return next
+      })
       setQuizOpen(false)
       setQuizQuestion(null)
       setPendingSpin(null)
       // Refrescar myStats de forma optimista
-      setMyStats((prev)=>{
+  setMyStats((prev)=>{
         const delta = isCorrect ? pendingSpin.points : -pendingSpin.points
-        return prev ? { ...prev, totalScore: (prev.totalScore||0) + delta, totalSpins: (prev.totalSpins||0)+1 } : prev
+  const updated = prev ? { ...prev, totalScore: (prev.totalScore||0) + delta, totalSpins: (prev.totalSpins||0)+1 } : prev
+  return updated
       })
       setUsedQuestionIds(prev => new Set(prev).add(quizQuestion.id))
     } catch (e) {
@@ -174,7 +195,7 @@ export default function App(){
       setQuizQuestion(null)
       setPendingSpin(null)
     }
-  }, [db, user, quizQuestion, pendingSpin])
+  }, [db, user, quizQuestion, pendingSpin, soundOn])
 
   const salir = async ()=>{
     showSplashFor(2500, '¡Gracias!', 'por participar en la actividad de Gobierno del Dato')
@@ -194,19 +215,45 @@ export default function App(){
           <div className="user-strip">
             <span className="user-label">Conectado como</span>
             <b className="user-email">{user.email}</b>
-            <button
-              onClick={salir}
-              className="logout-icon"
-              title="Salir"
-              aria-label="Salir"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-            </button>
+            {isMobile ? (
+              <button
+                onClick={()=>setShowSettings(true)}
+                title="Ajustes"
+                aria-label="Ajustes"
+                style={{
+                  marginLeft:8,
+                  padding:6,
+                  borderRadius:8,
+                  background:'rgba(255,255,255,.06)',
+                  border:'1px solid var(--stroke)',
+                  color:'var(--text)', cursor:'pointer'
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0A1.65 1.65 0 0 0 9 4.09V4a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0A1.65 1.65 0 0 0 20.91 12H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+                </svg>
+              </button>
+            ) : (
+              <>
+                <label style={{display:'inline-flex',alignItems:'center',gap:6,marginLeft:12,fontSize:12}}>
+                  <input type="checkbox" checked={soundOn} onChange={e=>setSoundOn(e.target.checked)} /> Sonido
+                </label>
+                <button
+                  onClick={salir}
+                  className="logout-icon"
+                  title="Salir"
+                  aria-label="Salir"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="ga-strip">
@@ -214,6 +261,9 @@ export default function App(){
             <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer" className="ga-badge">
               <img src={unirLogo} alt="UNIR" />
             </a>
+            <label style={{display:'inline-flex',alignItems:'center',gap:6,marginLeft:12,fontSize:12}}>
+              <input type="checkbox" checked={soundOn} onChange={e=>setSoundOn(e.target.checked)} /> Sonido
+            </label>
           </div>
         )}
       </header>
@@ -279,9 +329,11 @@ export default function App(){
             <>
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexWrap:'wrap',rowGap:6}}>
-                  <b>Gobierno del dato</b>
-                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                    <span style={{fontSize:14,opacity:.9}}>Racha: <b>{streak}</b></span>
                     <span style={{fontSize:14,opacity:.9}}>Puntaje: <b>{myStats?.totalScore ?? 0}</b></span>
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
                     <button
                       className="btn btn-sm"
                       onClick={()=>setShowLbModal(true)}
@@ -289,12 +341,12 @@ export default function App(){
                     >
                       Top 10
                     </button>
-                    {profileError && (
-                      <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:6,fontSize:12,marginLeft:8}}>
-                        {profileError}
-                      </div>
-                    )}
                   </div>
+                  {profileError && (
+                    <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:6,fontSize:12,marginLeft:0,marginTop:6}}>
+                      {profileError}
+                    </div>
+                  )}
                 </div>
 
                 <Wheel
@@ -303,6 +355,7 @@ export default function App(){
                   onBeforeFirstSpin={async ()=>{
                     showSplashFor(3000, '¡A jugar!', 'Que te diviertas 🎉', true)
                   }}
+                  soundOn={soundOn}
                 />
 
                 {lastResult && (
@@ -331,6 +384,10 @@ export default function App(){
               <div style={{border:'1px solid #222',borderRadius:12,padding:16}}>
                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
                   <b>Gobierno del dato</b>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <span style={{fontSize:14,opacity:.9}}>Puntaje: <b>{myStats?.totalScore ?? 0}</b></span>
+                    <span style={{fontSize:14,opacity:.9}}>Racha: <b>{streak}</b></span>
+                  </div>
                   {profileError && <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:8,marginBottom:8,fontSize:12,marginLeft:8}}>{profileError}</div>}
                 </div>
 
@@ -340,6 +397,7 @@ export default function App(){
                   onBeforeFirstSpin={async ()=>{
                     showSplashFor(3000, '¡A jugar!', 'Que te diviertas 🎉', true)
                   }}
+                  soundOn={soundOn}
                 />
 
                 {lastResult && (
@@ -372,7 +430,51 @@ export default function App(){
           dismissable={!feedbackOk}
           pointsDelta={lastResult?.points || 0}
         />
+
+        {/* Modal de racha */}
+        {streakModal.open && (
+          <div onClick={()=>setStreakModal({ open:false, level:0 })} style={{position:'fixed', inset:0, background:'rgba(0,0,0,.5)', display:'grid', placeItems:'center', zIndex:70}}>
+            <div onClick={e=>e.stopPropagation()} style={{
+              background:'#0b0b0b', border:'1px solid #3f3f46', borderRadius:16, padding:20,
+              boxShadow: '0 14px 40px rgba(0,0,0,.45)', textAlign:'center', width:'min(520px, 92vw)'
+            }}>
+              <div style={{fontSize:22, fontWeight:900, marginBottom:6}}>
+                {streakModal.level === 1 && '🔥 ¡Racha de 3!'}
+                {streakModal.level === 2 && '⚡ ¡Racha de 7!'}
+                {streakModal.level === 3 && (streak >= 10 ? '🏆 ¡Racha 10+!' : '🏆 ¡Racha de 10!')}
+              </div>
+              <div style={{opacity:.9, marginBottom:12}}>¡Sigue así! Racha actual: <b>{streak}</b></div>
+              <button onClick={()=>setStreakModal({ open:false, level:0 })} style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'8px 12px'}}>Continuar</button>
+            </div>
+          </div>
+        )}
       </main>
+      {isMobile && (
+        <Modal open={showSettings} title="Ajustes" onClose={()=>setShowSettings(false)} hideClose>
+          <div style={{display:'grid', gap:16}}>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+              <span>Sonido</span>
+              <button
+                type="button"
+                onClick={()=>setSoundOn(v=>!v)}
+                className={`switch ${soundOn ? 'on' : ''}`}
+                aria-pressed={soundOn}
+                aria-label="Activar o desactivar sonido"
+              >
+                <span className="switch-knob" />
+              </button>
+            </div>
+
+            <button
+              onClick={()=>{ setShowSettings(false); salir(); }}
+              className="btn"
+              style={{marginTop:4}}
+            >
+              Salir del juego
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
