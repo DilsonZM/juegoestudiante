@@ -312,6 +312,46 @@ html, body { overflow-x: hidden; }
   100% { transform: scale(.86); opacity: 0; }
 }
 
+/* Zumbido suave del contenedor del modal al 5→1 */
+.shake-soft{ animation: shakeSoft .3s ease-in-out; }
+@keyframes shakeSoft{
+  0%{ transform: translateX(0) }
+  25%{ transform: translateX(-2px) }
+  50%{ transform: translateX(2px) }
+  75%{ transform: translateX(-1px) }
+  100%{ transform: translateX(0) }
+}
+
+/* Zumbido más brusco */
+.shake-hard{ animation: shakeHard .22s cubic-bezier(.2,.7,.2,1) 0s 1; }
+@keyframes shakeHard{
+  0%{ transform: translateX(0) rotate(0deg) }
+  20%{ transform: translateX(-6px) rotate(-0.6deg) }
+  40%{ transform: translateX(6px) rotate(0.6deg) }
+  60%{ transform: translateX(-4px) rotate(-0.4deg) }
+  80%{ transform: translateX(4px) rotate(0.4deg) }
+  100%{ transform: translateX(0) rotate(0deg) }
+}
+
+/* Efecto “vidrio roto” al llegar a 0 */
+.shatter-overlay{
+  position:absolute; inset:0; pointer-events:none; overflow:hidden;
+}
+.shatter-overlay .shard{
+  position:absolute; width: 12px; height: 12px;
+  background: linear-gradient(135deg, rgba(255,255,255,.85), rgba(255,255,255,.35));
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius:2px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+  transform: translate(-50%, -50%);
+  animation: shardFly .9s ease-out forwards;
+}
+@keyframes shardFly{
+  0%{ transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity:1 }
+  20%{ transform: translate(calc(-50% + var(--dx)*.2), calc(-50% + var(--dy)*.2)) scale(1) rotate(var(--rot)); opacity:1 }
+  100%{ transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.9) rotate(var(--rot)); opacity:0 }
+}
+
 /* Switch minimal (para el modal de Ajustes) */
 .switch{
   --w: 42px; --h: 24px;

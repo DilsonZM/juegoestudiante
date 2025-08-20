@@ -19,7 +19,7 @@ export function vibrate(pattern) {
   } catch { /* ignore */ }
 }
 
-function beep({ freq = 660, duration = 120, type = 'sine', volume = 0.03 } = {}) {
+export function sfxBeep({ freq = 660, duration = 120, type = 'sine', volume = 0.03 } = {}) {
   const ctx = ensureAudio()
   if (!ctx) return
   const fire = () => {
@@ -45,7 +45,7 @@ function beep({ freq = 660, duration = 120, type = 'sine', volume = 0.03 } = {})
 export function sfxSpin(soundOn = true) {
   vibrate(12)
   if (!soundOn) return
-  beep({ freq: 480, duration: 60, type: 'triangle', volume: 0.025 })
+  sfxBeep({ freq: 480, duration: 60, type: 'triangle', volume: 0.025 })
 }
 
 // Tick corto tipo "clack" para ruleta, suavizado con ruido filtrado
@@ -161,14 +161,14 @@ export function sfxSpinTicks(soundOn = true, { durationMs = 3800, totalTicks = 4
 export function sfxCorrect(soundOn = true) {
   vibrate([12, 60, 12])
   if (!soundOn) return
-  beep({ freq: 680, duration: 90, type: 'sine', volume: 0.035 })
-  setTimeout(() => beep({ freq: 820, duration: 80, type: 'sine', volume: 0.035 }), 90)
+  sfxBeep({ freq: 680, duration: 90, type: 'sine', volume: 0.035 })
+  setTimeout(() => sfxBeep({ freq: 820, duration: 80, type: 'sine', volume: 0.035 }), 90)
 }
 
 export function sfxWrong(soundOn = true) {
   vibrate(70)
   if (!soundOn) return
-  beep({ freq: 180, duration: 150, type: 'sawtooth', volume: 0.03 })
+  sfxBeep({ freq: 180, duration: 150, type: 'sawtooth', volume: 0.03 })
 }
 
 export function sfxStreak(soundOn = true, level = 1) {
@@ -178,7 +178,7 @@ export function sfxStreak(soundOn = true, level = 1) {
   const step = 120
   const tones = Math.min(3, 1 + level)
   for (let i = 0; i < tones; i++) {
-    setTimeout(() => beep({ freq: base + i * step, duration: 90, type: 'sine', volume: 0.04 }), i * 100)
+  setTimeout(() => sfxBeep({ freq: base + i * step, duration: 90, type: 'sine', volume: 0.04 }), i * 100)
   }
 }
 

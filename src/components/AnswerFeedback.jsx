@@ -15,6 +15,39 @@ export default function AnswerFeedback({ open, correct, explain, onClose, durati
       style={{position:'fixed', inset:0, display:'grid', placeItems:'center', zIndex:60,
         background:'linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.55))'}}
     >
+      {/* Confeti / ramilletes al ganar */}
+      {correct && (
+        <div aria-hidden className="confetti-overlay" style={{position:'fixed', inset:0, pointerEvents:'none', overflow:'hidden'}}>
+          {Array.from({ length: 42 }).map((_, i) => {
+            const angle = (i / 42) * Math.PI * 2
+            const base = 160 + (i % 4) * 40
+            const dx = Math.cos(angle) * base
+            const dy = Math.sin(angle) * base
+            const rot = (i * 33) % 180 - 90
+            const delay = (i % 7) * 20
+            const colors = ['#ff6b6b','#ffd166','#06d6a0','#5ecbff','#b794f4','#8be9e3']
+            const color = colors[i % colors.length]
+            const w = 8 + (i % 3) * 4
+            const h = 10 + ((i+2) % 4) * 6
+            return (
+              <span key={i} className="confetti-piece" style={{
+                position:'absolute', left:'50%', top:'40%', width:w, height:h,
+                background: color, borderRadius:2, transform:'translate(-50%, -50%)',
+                animation: `confettiFly 900ms ease-out ${delay}ms forwards`,
+                boxShadow:'0 2px 6px rgba(0,0,0,.35)',
+                '--dx': `${dx}px`, '--dy': `${dy}px`, '--rot': `${rot}deg`
+              }} />
+            )
+          })}
+          <style>{`
+            @keyframes confettiFly {
+              0%   { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1 }
+              35%  { transform: translate(calc(-50% + var(--dx)*.4), calc(-50% + var(--dy)*.4)) scale(1.05) rotate(var(--rot)); opacity: 1 }
+              100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0 }
+            }
+          `}</style>
+        </div>
+      )}
       <div onClick={(e)=>e.stopPropagation()} style={{
         background: correct ? 'linear-gradient(135deg, #34d399, #10b981)' : 'linear-gradient(135deg, #f87171, #ef4444)',
         color:'#0b0b0b',

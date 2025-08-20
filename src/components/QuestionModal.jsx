@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import t from '../i18n'
-import { vibrate } from '../utils/sfx'
+import { vibrate, sfxBeep } from '../utils/sfx'
 
 export default function QuestionModal({ open, question, points, onAnswer, category }) {
   const [value, setValue] = useState('')
@@ -11,6 +11,7 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
   const [clicked, setClicked] = useState(null) // 'true' | 'false'
   const [skipping, setSkipping] = useState(false) // cerrar con X
   const timerRef = useRef(null)
+  const [shattered, setShattered] = useState(false)
 
   // Puntaje ajustado en tiempo real (debe ir después de definir seconds)
   const getMultiplier = (s) => {
@@ -36,9 +37,10 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
     setValue('')
     setClicked(null)
     setSkipping(false)
+  setShattered(false)
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
     timerRef.current = setInterval(() => {
-      setSeconds((s) => s - 1)
+      setSeconds((s) => Math.max(0, s - 1))
     }, 1000)
     return () => { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null } }
   }, [open, question?.id])
@@ -53,16 +55,27 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
 
   useEffect(() => {
     if (seconds === 0 && !locked) {
-      // Si se acaba el tiempo, penalizar como incorrecto para cualquier tipo
+      setLocked(true)
+      // parar intervalo si sigue activo
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+      setShattered(true)
+      try { vibrate([30, 40, 60]) } catch { /* ignore */ }
+      // pequeño cluster de pitidos tipo vidrio
+      try {
+        sfxBeep({ freq: 1200, duration: 70, type: 'triangle', volume: 0.05 })
+        setTimeout(()=>sfxBeep({ freq: 900, duration: 70, type: 'triangle', volume: 0.05 }), 60)
+        setTimeout(()=>sfxBeep({ freq: 600, duration: 90, type: 'sawtooth', volume: 0.05 }), 120)
+      } catch { /* ignore */ }
       onAnswer?.({ timeout: true, secondsLeft: 0 })
     }
   }, [seconds, locked, onAnswer])
 
-  // Aviso y vibración en cada segundo desde 5→1
+  // Aviso, vibración y pitido en cada segundo desde 5→1; zumbido visual
   useEffect(() => {
     if (!open || locked) return
     if (seconds <= 5 && seconds > 0) {
       try { vibrate(30) } catch { /* ignore */ }
+      try { sfxBeep({ freq: 720 - (seconds * 40), duration: 80, type: 'sine', volume: 0.04 }) } catch { /* ignore */ }
     }
   }, [open, locked, seconds])
 
@@ -90,7 +103,7 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
 
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',display:'grid',placeItems:'center',zIndex:50}}>
-      <div className="modal-card" aria-busy={locked} style={{width:'min(560px, 92vw)',background:'#111827',border:'1px solid #3f3f46',borderRadius:12,boxShadow:'0 10px 30px #0006',overflow:'hidden', position:'relative'}}>
+  <div className={`modal-card ${seconds <= 5 && seconds > 0 ? 'shake-hard' : ''}`} aria-busy={locked} style={{width:'min(560px, 92vw)',background:'#111827',border:'1px solid #3f3f46',borderRadius:12,boxShadow:'0 10px 30px #0006',overflow:'hidden', position:'relative'}}>
         <header style={{padding:'12px 16px',borderBottom:'1px solid #27272a',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:2}}>
             <h3 style={{margin:0,fontSize:18}}>{t('questionForPoints', points)}</h3>
@@ -107,7 +120,24 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
             style={{background:'transparent',border:0,color:'#e5e7eb',cursor: locked? 'not-allowed' : 'pointer', opacity: locked? .6 : 1}}
           >✕</button>
         </header>
-        <div style={{padding:16,display:'grid',gap:12}}>
+        {shattered && (
+          <div className="shatter-overlay" aria-hidden>
+            {Array.from({ length: 14 }).map((_, i) => {
+              const angle = (i / 14) * Math.PI * 2
+              const dist = 120 + (i % 3) * 40
+              const dx = Math.cos(angle) * dist
+              const dy = Math.sin(angle) * dist
+              const rot = (i * 27) % 90 - 45
+              return (
+                <span key={i} className="shard" style={{
+                  '--dx': `${dx}px`, '--dy': `${dy}px`, '--rot': `${rot}deg`,
+                  left: '50%', top: '50%'
+                }} />
+              )
+            })}
+          </div>
+        )}
+  <div style={{padding:16,display:'grid',gap:12}}>
           {category && (
             <div style={{fontSize:12, opacity:.85}}>
               Relacionada con la ruleta: <b>{category}</b>
