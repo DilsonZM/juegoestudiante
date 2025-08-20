@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useIsMobile } from '../hooks/useIsMobile'
 import { fetchLeaderboard, fetchUserRankByScore } from '../services/firestore'
 
 function MedalBadge({ rank }) {
@@ -17,6 +18,7 @@ function MedalBadge({ rank }) {
 }
 
 export default function Leaderboard({ db, currentUser, myStats }){
+  const isMobile = useIsMobile(980)
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -62,7 +64,7 @@ export default function Leaderboard({ db, currentUser, myStats }){
   const renderRow = (r, i, opts={}) => (
     <tr key={opts.key || r.id} style={{borderBottom:'1px solid #222', background: opts.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'}}>
   <td style={{padding:'6px 8px 6px 8px', width:'2.8ch', textAlign:'right'}}>#{i}</td>
-  <td style={{padding:'6px 8px 6px 10px'}}>
+      <td style={{padding: isMobile ? '6px 8px 6px 10px' : '6px 16px 6px 10px'}}>
         <div style={{ display:'inline-flex', alignItems:'center' }}>
           <MedalBadge rank={i} />
           <span>{r.displayName || r.id}</span>
@@ -105,7 +107,7 @@ export default function Leaderboard({ db, currentUser, myStats }){
           <thead>
             <tr style={{textAlign:'left',opacity:.9}}>
               <th style={{padding:'6px 8px 6px 8px',borderBottom:'1px solid #333', width:'2.8ch', textAlign:'right'}}>#</th>
-              <th style={{padding:'6px 8px 6px 10px',borderBottom:'1px solid #333'}}>Nombre</th>
+              <th style={{padding: isMobile ? '6px 8px 6px 10px' : '6px 16px 6px 10px',borderBottom:'1px solid #333'}}>Nombre</th>
               <th style={{padding:'6px 8px',borderBottom:'1px solid #333', textAlign:'center'}}>Score total</th>
               <th style={{padding:'6px 8px',borderBottom:'1px solid #333', textAlign:'center'}}>Giros totales</th>
             </tr>

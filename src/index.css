@@ -300,17 +300,17 @@ html, body { overflow-x: hidden; }
 @media (min-width: 981px) {
   .table-wrap { overflow-x: visible; }
   .table-wrap table {
-    min-width: 0;
-    width: 100%;
-    table-layout: fixed;
+  min-width: 0;
+  width: 100%;
+  table-layout: auto;  /* permite que el ancho de columnas se calcule por contenido */
   }
   .table-wrap th, .table-wrap td { white-space: nowrap; }
   /* Columna "Nombre" recorta con elipsis si se pasa */
   .table-wrap thead th:nth-child(2),
   .table-wrap tbody td:nth-child(2) {
-    max-width: 22ch;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  max-width: none;        /* sin límite: ancho según el nombre más largo */
+  overflow: visible;
+  text-overflow: clip;
   }
 }
 
@@ -324,8 +324,8 @@ html, body { overflow-x: hidden; }
 @media (max-width: 680px) {
   .table-wrap table {
     width: 100%;
-    table-layout: auto;   /* deja que el navegador mida por contenido */
-    min-width: 0;         /* anula el min-width de otras reglas */
+  width: 100%;
+  table-layout: auto;    /* ancho según contenido, p/Nombre más largo */
   }
   /* 2ª columna = Nombre: compacta al contenido (sin romper en varias líneas) */
   .table-wrap thead th:nth-child(2),
@@ -508,10 +508,11 @@ html, body { overflow-x: hidden; }
   .table-wrap thead th:nth-child(2),
   .table-wrap tbody td:nth-child(2) {
   white-space: nowrap;     /* no romper el nombre en varias líneas */
-  max-width: 30ch;         /* un poco más de espacio para nombres largos */
-  text-overflow: ellipsis;
-  overflow: hidden;
+  max-width: none;         /* sin límite para ver el nombre completo */
+  text-overflow: clip;
+  overflow: visible;
   padding-left: 14px;      /* deja ~2 espacios respecto al # */
+  padding-right: 28px;     /* más espacio hacia "Score total" */
   }
   /* Centrar columnas 3 y 4 (Score total, Giros totales) */
   .table-wrap thead th:nth-child(3),
@@ -519,5 +520,11 @@ html, body { overflow-x: hidden; }
   .table-wrap tbody td:nth-child(3),
   .table-wrap tbody td:nth-child(4) {
     text-align: center;
+  }
+  /* Permitir wrap en los títulos de 3 y 4 para caber mejor */
+  .table-wrap thead th:nth-child(3),
+  .table-wrap thead th:nth-child(4) {
+    white-space: normal;
+    line-height: 1.1;
   }
 }
