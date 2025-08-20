@@ -299,6 +299,19 @@ body{
 .wheel-wrap{ margin-inline:auto; }
 html, body { overflow-x: hidden; }
 
+/* ===== Animación "pop" para el contador (escala y aparece/desaparece en ~1s) ===== */
+.countdown-pop{
+  display: inline-block;
+  animation: countdownPop 1s ease both;
+}
+@keyframes countdownPop{
+  0%   { transform: scale(.86); opacity: 0; }
+  12%  { transform: scale(1.22); opacity: 1; }
+  28%  { transform: scale(1); }
+  70%  { opacity: 1; }
+  100% { transform: scale(.86); opacity: 0; }
+}
+
 /* Switch minimal (para el modal de Ajustes) */
 .switch{
   --w: 42px; --h: 24px;

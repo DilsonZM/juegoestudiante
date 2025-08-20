@@ -48,13 +48,13 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
     }
   }, [seconds, locked, onAnswer])
 
-  // Aviso al cruzar a 5s: vibración leve
+  // Aviso y vibración en cada segundo desde 5→1
   useEffect(() => {
-    if (!open) return
-    if (seconds === 5) {
-      try { vibrate(25) } catch { /* ignore */ }
+    if (!open || locked) return
+    if (seconds <= 5 && seconds > 0) {
+      try { vibrate(30) } catch { /* ignore */ }
     }
-  }, [open, seconds])
+  }, [open, locked, seconds])
 
   if (!open) return null
 
@@ -153,7 +153,13 @@ export default function QuestionModal({ open, question, points, onAnswer, catego
           )}
         </div>
   <footer style={{padding:16,borderTop:'1px solid #27272a',display:'flex',justifyContent:'space-between',gap:8,alignItems:'center'}}>
-          <span style={{opacity:.95, color: seconds <= 5 ? '#ef4444' : '#e5e7eb', fontWeight: seconds <= 5 ? 700 : 500}}>{t('time', seconds)}</span>
+          <span
+            key={seconds}
+            className={seconds <= 5 && seconds > 0 ? 'countdown-pop' : undefined}
+            style={{opacity:.95, color: seconds <= 5 ? '#ef4444' : '#e5e7eb', fontWeight: seconds <= 5 ? 700 : 500}}
+          >
+            {t('time', seconds)}
+          </span>
           {isShort && (
             <button className="btn" onClick={(e)=>{ e?.preventDefault?.(); if(!canSubmit) return; setLocked(true); onAnswer?.({ value: value.trim().toLowerCase(), secondsLeft: seconds }) }} disabled={!canSubmit} style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', padding:'8px 12px', borderRadius:8}}>{t('reply')}</button>
           )}
