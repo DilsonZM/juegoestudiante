@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth'
 import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore'
 import { useFirebase } from './hooks/useFirebase'
@@ -37,18 +37,47 @@ export default function App(){
   const [feedbackOk, setFeedbackOk] = useState(false)
   const [feedbackExplain, setFeedbackExplain] = useState('')
   const [showSplash, setShowSplash] = useState(true)
+  const [splashMsg, setSplashMsg] = useState({ title: 'Bienvenidos', sub: 'al juego de la Ruleta de Datos' })
+  const [splashClickThrough, setSplashClickThrough] = useState(false)
+  const splashTimerRef = useRef(null)
+  const splashIdRef = useRef(0)
+
+  const showSplashFor = useCallback((ms, title, sub, clickThrough = false) => {
+    // Cancela timer previo y genera un id; solo el último id puede ocultar el splash
+    if (splashTimerRef.current) { clearTimeout(splashTimerRef.current); splashTimerRef.current = null }
+    const myId = (splashIdRef.current = (splashIdRef.current + 1) % Number.MAX_SAFE_INTEGER)
+    if (title || sub) setSplashMsg({ title: title ?? splashMsg.title, sub: sub ?? splashMsg.sub })
+    setSplashClickThrough(!!clickThrough)
+    setShowSplash(true)
+    splashTimerRef.current = setTimeout(() => {
+      if (splashIdRef.current === myId) {
+        setShowSplash(false)
+        setSplashClickThrough(false)
+      }
+      splashTimerRef.current = null
+    }, ms)
+  }, [splashMsg.title, splashMsg.sub])
 
   useEffect(() => {
-    const t = setTimeout(()=> setShowSplash(false), 2500)
-    return () => clearTimeout(t)
-  }, [])
+    // Splash inicial (~2.5s) usando el controlador centralizado
+    showSplashFor(2500)
+    return () => { if (splashTimerRef.current) { clearTimeout(splashTimerRef.current); splashTimerRef.current = null } }
+  }, [showSplashFor])
 
-  // Google redirect result
+  // Google redirect result (solo si el flag indica que venimos de Google)
   useEffect(() => {
-    getRedirectResult(auth).catch((e) => {
-      if (e) console.error('Google redirect error:', e)
-    })
-  }, [auth])
+    try {
+      const want = sessionStorage.getItem('wantSplashLogin')
+      if (!want) return
+      getRedirectResult(auth).then((res) => {
+        if (res && res.user) {
+          showSplashFor(3000, 'Cargando…', 'Preparando tu juego')
+        }
+      }).catch((e) => {
+        if (e) console.error('Google redirect error:', e)
+      })
+    } catch { /* ignore */ }
+  }, [auth, showSplashFor])
 
   // Sesión + perfil mínimo
   useEffect(()=> onAuthStateChanged(auth, async (u)=>{
@@ -67,12 +96,30 @@ export default function App(){
       }
       setProfileReady(true)
       setProfileError(null)
+      // Si se inició un flujo de auth (login/registro/google), mantener/mostrar splash y cerrarlo luego de 3s
+      try {
+        if (sessionStorage.getItem('wantSplashLogin')) {
+          showSplashFor(3000, 'Cargando…', 'Preparando tu juego')
+          try { sessionStorage.removeItem('wantSplashLogin') } catch { /* ignore */ }
+        }
+      } catch { /* ignore */ }
+      // Splash si venimos de login con Google (popup o redirect)
+      try {
+        if (sessionStorage.getItem('wantSplashLogin')) {
+          setSplashMsg({ title: 'Cargando…', sub: 'Preparando tu juego' })
+          setShowSplash(true)
+          setTimeout(() => {
+            setShowSplash(false)
+            try { sessionStorage.removeItem('wantSplashLogin') } catch { /* ignore */ }
+          }, 3000)
+        }
+      } catch { /* ignore */ }
     }catch(err){
       console.error('Perfil/Firestore no disponible:', err)
       setProfileError('⚠️ Error conectando con Firestore. Se podrá girar, pero no se guardarán resultados.')
       setProfileReady(true)
     }
-  }), [auth, db])
+  }), [auth, db, showSplashFor])
 
   // Suscripción a tu doc de puntuación
   useEffect(() => {
@@ -129,11 +176,14 @@ export default function App(){
     }
   }, [db, user, quizQuestion, pendingSpin])
 
-  const salir = async ()=>{ try{ await signOut(auth) } catch(e){ console.error(e) } }
+  const salir = async ()=>{
+    showSplashFor(2500, '¡Gracias!', 'por participar en la actividad de Gobierno del Dato')
+    try{ await signOut(auth) } catch(e){ console.error(e) }
+  }
 
   return (
     <div style={{minHeight:'100vh',background:'#0b0b0b',color:'#eaeaea',padding:16,fontFamily:'system-ui, sans-serif'}}>
-  {showSplash && <Splash />}
+  {showSplash && <Splash title={splashMsg.title} sub={splashMsg.sub} clickThrough={splashClickThrough} />}
       <header className="app-header">
         <div className="brand-title">
           <span className="app-emoji" aria-hidden>🎡</span>
@@ -173,7 +223,16 @@ export default function App(){
           isMobile
           ? (
             <div style={{display:'grid',gap:12}}>
-              <AuthPanel auth={auth} db={db} onReady={()=>{}} />
+        <AuthPanel
+                auth={auth}
+                db={db}
+                onStartAuth={()=>{
+          showSplashFor(3000, 'Cargando…', 'Preparando tu juego')
+                }}
+                onReady={()=>{
+                  // El cierre del splash se maneja al completar la sesión en onAuthStateChanged
+                }}
+              />
               <button
                 onClick={()=>setShowLbModal(true)}
                 className="btn"
@@ -199,7 +258,16 @@ export default function App(){
                 </div>
               </aside>
               <main className="auth-main">
-                <AuthPanel auth={auth} db={db} onReady={()=>{}} />
+        <AuthPanel
+                  auth={auth}
+                  db={db}
+                  onStartAuth={()=>{
+          showSplashFor(3000, 'Cargando…', 'Preparando tu juego')
+                  }}
+                  onReady={()=>{
+                    // cierre del splash via onAuthStateChanged
+                  }}
+                />
               </main>
             </div>
           )
@@ -229,7 +297,13 @@ export default function App(){
                   </div>
                 </div>
 
-                <Wheel onResult={onSpinResult} disabled={quizOpen} />
+                <Wheel
+                  onResult={onSpinResult}
+                  disabled={quizOpen}
+                  onBeforeFirstSpin={async ()=>{
+                    showSplashFor(3000, '¡A jugar!', 'Que te diviertas 🎉', true)
+                  }}
+                />
 
                 {lastResult && (
                   <div style={{marginTop:12, padding:10, border:'1px dashed #3f3f46', borderRadius:10}}>
@@ -260,7 +334,13 @@ export default function App(){
                   {profileError && <div style={{background:'#332b00',border:'1px solid #665500',borderRadius:8,padding:8,marginBottom:8,fontSize:12,marginLeft:8}}>{profileError}</div>}
                 </div>
 
-                <Wheel onResult={onSpinResult} disabled={quizOpen} />
+                <Wheel
+                  onResult={onSpinResult}
+                  disabled={quizOpen}
+                  onBeforeFirstSpin={async ()=>{
+                    showSplashFor(3000, '¡A jugar!', 'Que te diviertas 🎉', true)
+                  }}
+                />
 
                 {lastResult && (
                   <div style={{marginTop:12, padding:10, border:'1px dashed #3f3f46', borderRadius:10}}>

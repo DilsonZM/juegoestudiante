@@ -6,7 +6,7 @@ import { loginWithGoogle } from '../services/auth'
 import { getFirebaseErrorMsg } from '../firebaseErrorMap'
 import { showErrorSwal } from '../swal'
 
-export default function AuthPanel({ auth, db, onReady }) {
+export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,6 +24,8 @@ export default function AuthPanel({ auth, db, onReady }) {
   const doRegister = async () => {
     setLoading(true); setError('')
     try {
+  try { sessionStorage.setItem('wantSplashLogin','1') } catch { /* ignore */ }
+  onStartAuth?.()
       const name = (displayName || '').trim()
       if (!name) {
         await Swal.fire({
@@ -50,6 +52,8 @@ export default function AuthPanel({ auth, db, onReady }) {
   const doLogin = async () => {
     setLoading(true); setError('')
     try {
+  try { sessionStorage.setItem('wantSplashLogin','1') } catch { /* ignore */ }
+  onStartAuth?.()
       await signInWithEmailAndPassword(auth, email, password)
       onReady?.()
     } catch (e) {
@@ -264,10 +268,10 @@ export default function AuthPanel({ auth, db, onReady }) {
           {loading ? 'Procesando…' : mode === 'login' ? 'Ingresar' : mode === 'register' ? 'Crear cuenta' : 'Enviar correo'}
         </button>
 
-        {mode === 'login' && (
+    {mode === 'login' && (
           <button
             type="button"
-            onClick={() => loginWithGoogle(auth)}
+            onClick={() => { try{ sessionStorage.setItem('wantSplashLogin','1') } catch { /* ignore */ } loginWithGoogle(auth) }}
             style={{
               marginTop: 10,
               width:'100%', height:46,

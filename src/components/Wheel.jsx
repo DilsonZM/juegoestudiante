@@ -12,15 +12,20 @@ const SEGMENTS = [
   { label: 'Interoperabilidad', points: 6,  color: '#22d3ee' },
 ]
 
-export default function Wheel({ onResult, disabled }) {
+export default function Wheel({ onResult, disabled, onBeforeFirstSpin }) {
   const [spinning, setSpinning] = useState(false)
   const [angle, setAngle] = useState(0)
+  const [started, setStarted] = useState(false)
 
   const segAngle = 360 / SEGMENTS.length
   const RAD_TEXT = 36
 
-  const spin = () => {
+  const spin = async () => {
     if (spinning || disabled) return
+    if (!started && onBeforeFirstSpin) {
+      try { onBeforeFirstSpin() } catch { /* ignore */ }
+      setStarted(true)
+    }
     setSpinning(true)
     const turns = 5 + Math.floor(Math.random() * 4)
     const idx = Math.floor(Math.random() * SEGMENTS.length)
@@ -60,7 +65,7 @@ export default function Wheel({ onResult, disabled }) {
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleWheelTap() }
         }}
-        style={{ cursor: (spinning || disabled) ? 'not-allowed' : 'pointer' }}
+        style={{ cursor: (spinning || disabled) ? 'not-allowed' : 'pointer', pointerEvents: (spinning || disabled) ? 'none' : 'auto' }}
       >
         <div style={{
           position: 'absolute', left: '50%', top: -8, transform: 'translateX(-50%)',
@@ -98,7 +103,7 @@ export default function Wheel({ onResult, disabled }) {
         </svg>
       </div>
 
-      <button onClick={spin} disabled={spinning} style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #3f3f46', background: '#18181b', color: '#fafafa' }}>
+  <button onClick={spin} disabled={spinning || disabled} style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #3f3f46', background: '#18181b', color: '#fafafa', opacity: (spinning || disabled) ? .7 : 1 }}>
         {spinning ? 'Girando…' : '🎡 ¡Girar ruleta!'}
       </button>
     </div>

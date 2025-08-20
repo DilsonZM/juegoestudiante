@@ -1,8 +1,8 @@
 import React from 'react'
 
-export default function Splash(){
+export default function Splash({ title = 'Bienvenidos', sub = 'al juego de la Ruleta de Datos', clickThrough = false }){
   return (
-    <div className="splash-overlay" role="dialog" aria-label="Bienvenido">
+  <div className="splash-overlay" role="dialog" aria-label="Bienvenido" style={{ pointerEvents: clickThrough ? 'none' : 'auto' }}>
       <div className="splash-card">
         <div className="splash-wheel" aria-hidden>
           <svg viewBox="0 0 100 100">
@@ -27,8 +27,8 @@ export default function Splash(){
           </svg>
           <span className="splash-pin" />
         </div>
-        <h1 className="splash-title">Bienvenidos</h1>
-        <p className="splash-sub">al juego de la Ruleta de Datos</p>
+  <h1 className="splash-title">{title}</h1>
+  <p className="splash-sub">{sub}</p>
         <div className="splash-loading" aria-label="Cargando" />
       </div>
     </div>
