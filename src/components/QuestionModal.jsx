@@ -36,6 +36,18 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
 
   if (!open) return null
 
+  const Spinner = () => (
+    <span aria-hidden style={{display:'inline-flex',alignItems:'center',justifyContent:'center'}}>
+      <svg width="20" height="20" viewBox="0 0 50 50" role="img">
+        <title>cargando</title>
+        <circle cx="25" cy="25" r="20" stroke="#94a3b8" strokeWidth="4" fill="none" opacity=".25"/>
+        <path d="M25 5 a20 20 0 0 1 0 40" fill="none" stroke="#8be9e3" strokeWidth="4" strokeLinecap="round">
+          <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.9s" repeatCount="indefinite"/>
+        </path>
+      </svg>
+    </span>
+  )
+
   const submit = (e) => {
     e?.preventDefault?.()
     if (!canSubmit) return
@@ -46,7 +58,7 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
 
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',display:'grid',placeItems:'center',zIndex:50}}>
-      <div className="modal-card" style={{width:'min(560px, 92vw)',background:'#111827',border:'1px solid #3f3f46',borderRadius:12,boxShadow:'0 10px 30px #0006',overflow:'hidden'}}>
+      <div className="modal-card" aria-busy={locked} style={{width:'min(560px, 92vw)',background:'#111827',border:'1px solid #3f3f46',borderRadius:12,boxShadow:'0 10px 30px #0006',overflow:'hidden', position:'relative'}}>
         <header style={{padding:'12px 16px',borderBottom:'1px solid #27272a',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <h3 style={{margin:0,fontSize:18}}>{t('questionForPoints', points)}</h3>
           <button onClick={onClose} aria-label="Cerrar" style={{background:'transparent',border:0,color:'#e5e7eb',cursor:'pointer'}}>✕</button>
@@ -87,6 +99,17 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
                   transform: clicked==='false' ? 'scale(1.04)' : 'scale(1)'
                 }}
               >{t('false')}</button>
+            </div>
+          )}
+
+          {locked && (
+            <div style={{
+              display:'flex', alignItems:'center', gap:10,
+              padding:'8px 10px', border:'1px dashed #334155', borderRadius:8,
+              background:'rgba(15,23,42,.35)'
+            }}>
+              <Spinner />
+              <span style={{fontSize:13, color:'#cbd5e1'}}>Procesando respuesta…</span>
             </div>
           )}
 
