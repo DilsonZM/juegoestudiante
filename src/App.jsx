@@ -159,11 +159,25 @@ export default function App(){
   const handleQuizAnswer = useCallback(async (answer) => {
     if (!quizQuestion || !pendingSpin || !user) { setQuizOpen(false); return }
     const wasTimeout = typeof answer === 'object' && answer?.timeout
-    const normalized = quizQuestion.type === 'tf' ? Boolean(answer) : String(answer).toLowerCase()
+    const secondsLeft = typeof answer === 'object' && Number.isFinite(answer?.secondsLeft) ? answer.secondsLeft : undefined
+    // Normalizar respuesta soportando nuevo shape
+    let normalized
+    if (quizQuestion.type === 'tf') {
+      normalized = typeof answer === 'object' ? Boolean(answer.choice) : Boolean(answer)
+    } else {
+      normalized = typeof answer === 'object' ? String(answer.value ?? '').toLowerCase() : String(answer).toLowerCase()
+    }
     const correctAnswer = quizQuestion.type === 'tf' ? Boolean(quizQuestion.answer) : String(quizQuestion.answer).toLowerCase()
     const isCorrect = !wasTimeout && (normalized === correctAnswer)
+    // Multiplicador por tiempo: <=5s x0.5, <=10s x0.75, otro x1
+    let timeMult = 1
+    if (isCorrect && Number.isFinite(secondsLeft)) {
+      if (secondsLeft <= 5) timeMult = 0.5
+      else if (secondsLeft <= 10) timeMult = 0.75
+    }
+    const awardedPoints = isCorrect ? Math.max(1, Math.round(pendingSpin.points * timeMult)) : -pendingSpin.points
     try {
-  await persistQuizOutcome(db, user.uid, user.displayName || user.email, pendingSpin, quizQuestion, isCorrect)
+  await persistQuizOutcome(db, user.uid, user.displayName || user.email, { ...pendingSpin, points: Math.abs(awardedPoints) }, quizQuestion, isCorrect)
       window.dispatchEvent(new Event('reload-top10'))
       // Feedback visual + SFX
       setFeedbackOk(isCorrect)
@@ -182,12 +196,12 @@ export default function App(){
         }
         return next
       })
-      setQuizOpen(false)
+  setQuizOpen(false)
       setQuizQuestion(null)
       setPendingSpin(null)
       // Refrescar myStats de forma optimista
   setMyStats((prev)=>{
-        const delta = isCorrect ? pendingSpin.points : -pendingSpin.points
+    const delta = awardedPoints
   const updated = prev ? { ...prev, totalScore: (prev.totalScore||0) + delta, totalSpins: (prev.totalSpins||0)+1 } : prev
   return updated
       })

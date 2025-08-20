@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import t from '../i18n'
+import { vibrate } from '../utils/sfx'
 
 export default function QuestionModal({ open, onClose, question, points, onAnswer, category }) {
   const [value, setValue] = useState('')
@@ -31,9 +32,17 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
   useEffect(() => {
     if (seconds === 0) {
   // Si se acaba el tiempo, penalizar como incorrecto para cualquier tipo
-  onAnswer?.({ timeout: true })
+      onAnswer?.({ timeout: true, secondsLeft: 0 })
     }
   }, [seconds, isTF, onAnswer, onClose])
+
+  // Aviso al cruzar a 5s: vibración leve
+  useEffect(() => {
+    if (!open) return
+    if (seconds === 5) {
+      try { vibrate(25) } catch { /* ignore */ }
+    }
+  }, [open, seconds])
 
   if (!open) return null
 
@@ -82,7 +91,7 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
               <button
                 className="btn"
         disabled={locked}
-                onClick={()=>{ setClicked('true'); setLocked(true); onAnswer?.(true) }}
+                onClick={()=>{ setClicked('true'); setLocked(true); onAnswer?.({ choice: true, secondsLeft: seconds }) }}
                 style={{
                   border:'1px solid #3f3f46',
                   background: clicked==='true' ? '#16a34a' : '#14532d',
@@ -95,7 +104,7 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
               <button
                 className="btn"
         disabled={locked}
-                onClick={()=>{ setClicked('false'); setLocked(true); onAnswer?.(false) }}
+                onClick={()=>{ setClicked('false'); setLocked(true); onAnswer?.({ choice: false, secondsLeft: seconds }) }}
                 style={{
                   border:'1px solid #3f3f46',
                   background: clicked==='false' ? '#dc2626' : '#7f1d1d',
@@ -132,9 +141,9 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
           )}
         </div>
   <footer style={{padding:16,borderTop:'1px solid #27272a',display:'flex',justifyContent:'space-between',gap:8,alignItems:'center'}}>
-          <span style={{opacity:.85}}>{t('time', seconds)}</span>
+          <span style={{opacity:.95, color: seconds <= 5 ? '#ef4444' : '#e5e7eb', fontWeight: seconds <= 5 ? 700 : 500}}>{t('time', seconds)}</span>
           {isShort && (
-            <button className="btn" onClick={submit} disabled={!canSubmit} style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', padding:'8px 12px', borderRadius:8}}>{t('reply')}</button>
+            <button className="btn" onClick={(e)=>{ e?.preventDefault?.(); if(!canSubmit) return; setLocked(true); onAnswer?.({ value: value.trim().toLowerCase(), secondsLeft: seconds }) }} disabled={!canSubmit} style={{border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', padding:'8px 12px', borderRadius:8}}>{t('reply')}</button>
           )}
         </footer>
       </div>
