@@ -133,11 +133,28 @@ export function sfxSpinTicks(soundOn = true, { durationMs = 3800, totalTicks = 4
   }
   // Normalizar a durationMs
   const scale = durationMs / acc
-  times.forEach((t, idx) => {
+  const normalized = times.map(t => Math.floor(t * scale))
+
+  // Reducir la frecuencia SOLO al final:
+  // - Últimos tailWindowMs deben tener una separación mínima minGapTailMs entre ticks
+  const tailWindowMs = 800
+  const minGapTailMs = 340
+  const finalTimes = []
+  for (let i = 0; i < normalized.length; i++) {
+    const t = normalized[i]
+    const last = finalTimes.length ? finalTimes[finalTimes.length - 1] : -Infinity
+    if (t >= durationMs - tailWindowMs) {
+      if (t - last < minGapTailMs) continue
+    }
+    finalTimes.push(t)
+  }
+
+  const count = finalTimes.length
+  finalTimes.forEach((t, idx) => {
     // Volumen suave, con un ligero pico hacia el último tercio
-    const p = idx / (total - 1)
-    const vol = 0.022 + (p > 0.66 ? 0.01 * (p - 0.66) / 0.34 : 0) // ~0.022 → 0.032
-    setTimeout(() => tick({ volume: vol }), Math.floor(t * scale))
+    const p = count > 1 ? (idx / (count - 1)) : 1
+    const vol = 0.022 + (p > 0.66 ? 0.01 * (p - 0.66) / 0.34 : 0)
+    setTimeout(() => tick({ volume: vol }), t)
   })
 }
 
