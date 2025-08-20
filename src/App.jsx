@@ -360,7 +360,7 @@ export default function App(){
 
               <QuestionModal
                 open={quizOpen}
-                onClose={()=>setQuizOpen(false)}
+                onClose={()=>handleQuizAnswer({ timeout: true })}
                 question={quizQuestion}
                 points={pendingSpin?.points}
                 category={pendingSpin?.label}
@@ -401,7 +401,7 @@ export default function App(){
 
               <QuestionModal
                 open={quizOpen}
-                onClose={()=>setQuizOpen(false)}
+                onClose={()=>handleQuizAnswer({ timeout: true })}
                 question={quizQuestion}
                 points={pendingSpin?.points}
                 category={pendingSpin?.label}

@@ -28,9 +28,8 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
 
   useEffect(() => {
     if (seconds === 0) {
-      // Si se acaba el tiempo y es TF, marcamos como incorrecto
-      if (isTF) onAnswer?.({ timeout: true })
-      else onClose?.()
+  // Si se acaba el tiempo, penalizar como incorrecto para cualquier tipo
+  onAnswer?.({ timeout: true })
     }
   }, [seconds, isTF, onAnswer, onClose])
 
@@ -61,7 +60,7 @@ export default function QuestionModal({ open, onClose, question, points, onAnswe
       <div className="modal-card" aria-busy={locked} style={{width:'min(560px, 92vw)',background:'#111827',border:'1px solid #3f3f46',borderRadius:12,boxShadow:'0 10px 30px #0006',overflow:'hidden', position:'relative'}}>
         <header style={{padding:'12px 16px',borderBottom:'1px solid #27272a',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <h3 style={{margin:0,fontSize:18}}>{t('questionForPoints', points)}</h3>
-          <button onClick={onClose} aria-label="Cerrar" style={{background:'transparent',border:0,color:'#e5e7eb',cursor:'pointer'}}>✕</button>
+          <button disabled={locked} onClick={onClose} aria-label="Cerrar" style={{background:'transparent',border:0,color:'#e5e7eb',cursor: locked? 'not-allowed' : 'pointer', opacity: locked? .6 : 1}}>✕</button>
         </header>
         <div style={{padding:16,display:'grid',gap:12}}>
           {category && (
