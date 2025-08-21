@@ -23,6 +23,10 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
   const [powerProgress, setPowerProgress] = useState(0) // 0..1 progreso visual de la barra de fuerza
   const [maxPower, setMaxPower] = useState(false) // alcanzó potencia completa
   const [extraBurst, setExtraBurst] = useState(false) // para un segundo destello si max power
+  const [showTapHint, setShowTapHint] = useState(false)
+  const holdUsedRef = useRef(false)
+  const normalTapCountRef = useRef(0)
+  const currentSpinPowerRef = useRef(0)
   const holdRef = useRef({ start: 0, handledClick: false })
   const holdVibeRef = useRef(null)
   const audioRef = useRef({ ctx: null, osc: null, gain: null })
@@ -47,8 +51,19 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
   const segAngle = 360 / SEGMENTS.length
   const RAD_TEXT = 36
 
-  const spin = async (power = 0) => {
+    const spin = async (power = 0) => {
     if (spinning || disabled) return
+    currentSpinPowerRef.current = power
+  // Mostrar hint inmediatamente AL INICIAR el 2º giro normal consecutivo
+  if (power === 0 && !holdUsedRef.current && normalTapCountRef.current === 1) {
+        try {
+          if (!localStorage.getItem('powerHintV3Shown')) {
+            setShowTapHint(true)
+            setTimeout(()=> setShowTapHint(false), 6000)
+            localStorage.setItem('powerHintV3Shown','1')
+          }
+        } catch { /* noop */ }
+      }
     if (!started && onBeforeFirstSpin) {
       try { onBeforeFirstSpin() } catch { /* ignore */ }
       setStarted(true)
@@ -82,8 +97,12 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     setAngle(newAngle)
     setTimeout(() => {
       setSpinning(false)
-      // Entregar el resultado directamente con el índice elegido para evitar desviaciones por redondeo
       onResult?.(SEGMENTS[idx])
+        // Al completar giro normal (sin hold) y sin haber usado hold antes, incrementar contador (solo hasta 3)
+      if (!holdUsedRef.current && currentSpinPowerRef.current === 0) {
+        normalTapCountRef.current += 1
+          if (normalTapCountRef.current > 3) normalTapCountRef.current = 3
+      }
     }, durationMs)
   // Reproducir ticks desacelerando durante todo el giro
   try { sfxSpinTicks(soundOn, { durationMs, totalTicks: approxTicks }) } catch { /* noop */ }
@@ -202,6 +221,11 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     spin(power)
     // limpiar barra
     setTimeout(()=>setPowerProgress(0), 400)
+    if (power > 0) {
+      holdUsedRef.current = true
+  if (showTapHint) setShowTapHint(false)
+  try { localStorage.setItem('powerHintV3Shown','1') } catch { /* noop */ }
+    }
   }
   const onPointerUp = () => { if (spinning || disabled) return; endHoldAndSpin() }
   const onPointerCancel = () => { setIsHolding(false); if (holdVibeRef.current) { clearInterval(holdVibeRef.current); holdVibeRef.current = null } if (holdTimeoutRef.current) { clearTimeout(holdTimeoutRef.current); holdTimeoutRef.current = null } if (powerRafRef.current) { cancelAnimationFrame(powerRafRef.current); powerRafRef.current = null } stopChargeSound(); holdRef.current.start = 0; setPowerProgress(0) }
@@ -308,6 +332,11 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
         style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #3f3f46', background: '#18181b', color: '#fafafa', opacity: (spinning || disabled) ? .7 : 1 }}>
         {spinning ? 'Girando…' : '🎡 ¡Girar ruleta!'}
       </button>
+      {showTapHint && (
+        <div className="power-hint-badge power-hint-fire" aria-live="polite" role="status">
+          🔥🔥 ¡Mantén presionado para TURBO! 🔥🔥
+        </div>
+      )}
     </div>
   )
 }

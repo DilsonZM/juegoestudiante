@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.2.6 - 2025-08-21
+- Hint TURBO: aparece ahora al iniciar el 2º giro normal (antes 3º) para enseñar más rápido el press & hold.
+- Mensaje reforzado con efecto fuego (clase `power-hint-fire`) y animaciones adicionales.
+- No se repite tras usarse hold (persistido en localStorage `powerHintV3Shown`).
+
 ## 0.2.4 - 2025-08-21
 - Ajuste final Auth Google: redirect universal (excepto localhost) para suprimir warnings COOP y mejorar compatibilidad WebView.
 
