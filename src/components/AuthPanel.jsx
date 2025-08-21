@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import Swal from 'sweetalert2'
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { loginWithGoogle } from '../services/auth'
 import { getFirebaseErrorMsg } from '../firebaseErrorMap'
 import { showErrorSwal } from '../swal'
-import { getInAppBrowserInfo } from '../utils/inAppBrowser'
 
 export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
   const [mode, setMode] = useState('login')
@@ -17,10 +16,8 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
-  const inAppInfo = useMemo(() => getInAppBrowserInfo(), [])
 
-  // Nota: intencionalmente no forzamos la salida a navegador externo.
-  // LinkedIn y otros in-app bloquean estos intentos; dejamos un aviso con enlace directo.
+  
 
   const saveProfile = useCallback(async (uid, profile) => {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
@@ -113,43 +110,7 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
         </p>
       </header>
 
-      {inAppInfo.isInApp && (
-        <div className="alert" role="status" style={{ marginTop: 10, background:'#2c1f00', border:'1px solid #6b4e00', color:'#f3e8c3' }}>
-          <b>Estás dentro de {inAppInfo.label || 'un navegador embebido'}.</b>
-          <div style={{ marginTop: 6, fontSize: 13, opacity: .95 }}>
-            Por políticas de LinkedIn, Google puede fallar dentro de este navegador. Abre el juego directamente en tu navegador (Chrome/Safari).
-          </div>
-          <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
-            {inAppInfo.isInApp && (
-              <a
-                href={typeof window!=='undefined' ? window.location.href.split('#')[0] : '#'}
-                target="_blank" rel="noopener noreferrer"
-                style={{ fontSize:12, color:'#fbbf24', marginLeft:8 }}
-              >Enlace directo</a>
-            )}
-            <button
-              type="button"
-              className="btn"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(window.location.href)
-                  await Swal.fire({
-                    toast: true,
-                    position: 'bottom',
-                    timer: 1800,
-                    showConfirmButton: false,
-                    icon: 'success',
-                    title: 'Enlace copiado. Pégalo en tu navegador.'
-                  })
-                } catch (err) {
-                  console.warn('No se pudo copiar enlace al portapapeles', err)
-                }
-              }}
-              style={{ border:'1px solid #3f3f46', background:'#0f152d', color:'#e8ecf4', borderRadius:10, padding:'8px 10px' }}
-            >Copiar enlace</button>
-          </div>
-        </div>
-      )}
+  
 
       <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
         {['login', 'register', 'reset'].map(m => (
