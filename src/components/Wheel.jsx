@@ -20,10 +20,27 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
   const [spinDuration, setSpinDuration] = useState(3800)
   const [isHolding, setIsHolding] = useState(false)
   const [showFlames, setShowFlames] = useState(false)
+  const [powerProgress, setPowerProgress] = useState(0) // 0..1 progreso visual de la barra de fuerza
   const holdRef = useRef({ start: 0, handledClick: false })
   const holdVibeRef = useRef(null)
   const audioRef = useRef({ ctx: null, osc: null, gain: null })
   const holdTimeoutRef = useRef(null)
+  const powerRafRef = useRef(null)
+  // Genera gradiente de la barra de poder: verde -> amarillo -> naranja -> rojo
+  const powerGradient = (p) => {
+    if (p <= 0) return 'conic-gradient(rgba(255,255,255,0.05) 0deg 360deg)'
+    const arc = p * 360
+    // Posiciones relativas dentro del arco llenado
+    const g1 = Math.max(0, Math.min(arc, arc * 0.25))
+    const g2 = Math.max(g1, Math.min(arc, arc * 0.55))
+    const g3 = Math.max(g2, Math.min(arc, arc * 0.80))
+    const g4 = arc
+    // Colores: verde (#06d6a0) -> amarillo (#ffd400) -> naranja (#ff6b00) -> rojo/rosa (#ff2d55)
+    const filled = `#06d6a0 0deg, #06d6a0 ${g1}deg, #ffd400 ${g2}deg, #ff6b00 ${g3}deg, #ff2d55 ${g4}deg`
+    const rest = `rgba(255,255,255,0.05) ${g4}deg 360deg`
+    // Añadimos un suave brillo radial central para efecto "candela"
+    return `conic-gradient(${filled}, ${rest}), radial-gradient(circle at 50% 50%, rgba(255,180,0,${0.35 + p*0.25}), rgba(255,80,0,0) 70%)`
+  }
 
   const segAngle = 360 / SEGMENTS.length
   const RAD_TEXT = 36
@@ -38,13 +55,14 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     try {
       sfxSpin(soundOn)
     } catch { /* noop */ }
-    // 1) Elegir segmento objetivo y calcular centro absoluto de ese segmento
-    //    Ajustar vueltas y duración según potencia (press & hold)
-  const minTurns = 5
-  const maxTurns = 12 // más potencia ⇒ más vueltas visibles
-    const clampedPower = Math.max(0, Math.min(1, power))
-  const turns = Math.round(minTurns + (maxTurns - minTurns) * clampedPower)
-  const durationMs = Math.round(4200 + 1800 * clampedPower) // hasta ~6s
+  // 1) Elegir segmento objetivo y calcular centro absoluto
+  //    Vueltas: base normal 5–6 (ligera variación) + hasta +6 extra si power=1 (3.5s hold)
+  const clampedPower = Math.max(0, Math.min(1, power))
+  const baseTurns = 5 + Math.floor(Math.random()*2) // 5 ó 6
+  const extraTurns = Math.round(6 * clampedPower)   // 0..6
+  const turns = baseTurns + extraTurns              // 5–12
+  // Duración proporcional: base 3800ms + 280ms por vuelta extra añadida
+  const durationMs = 3800 + (extraTurns * 280)
     setSpinDuration(durationMs)
     const idx = Math.floor(Math.random() * SEGMENTS.length)
     const epsilon = 0.1 // pequeño sesgo para evitar caída exacta en la línea por redondeos
@@ -130,6 +148,16 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     } catch { /* noop */ }
     // sonido de carga
     startChargeSound()
+    // loop de actualización de barra de fuerza
+    const step = () => {
+      if (!holdRef.current.start) return
+      const elapsed = Date.now() - holdRef.current.start
+      const clamped = Math.min(elapsed, HOLD_MAX_MS)
+      const p = clamped / HOLD_MAX_MS
+      setPowerProgress(p)
+      powerRafRef.current = requestAnimationFrame(step)
+    }
+    powerRafRef.current = requestAnimationFrame(step)
     // Límite hard de 3.5s: auto-dispara el spin
     try {
       if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current)
@@ -148,6 +176,7 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     if (holdVibeRef.current) { clearInterval(holdVibeRef.current); holdVibeRef.current = null }
     if (holdTimeoutRef.current) { clearTimeout(holdTimeoutRef.current); holdTimeoutRef.current = null }
     stopChargeSound()
+    if (powerRafRef.current) { cancelAnimationFrame(powerRafRef.current); powerRafRef.current = null }
     holdRef.current.start = 0
     // Tap corto ⇒ comportamiento actual
     if (heldMs < HOLD_MIN_MS) { spin(0); return }
@@ -157,10 +186,12 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     setShowFlames(true)
     setTimeout(() => setShowFlames(false), 900)
     spin(power)
+    // limpiar barra
+    setTimeout(()=>setPowerProgress(0), 400)
   }
   const onPointerUp = () => { if (spinning || disabled) return; endHoldAndSpin() }
-  const onPointerCancel = () => { setIsHolding(false); if (holdVibeRef.current) { clearInterval(holdVibeRef.current); holdVibeRef.current = null } if (holdTimeoutRef.current) { clearTimeout(holdTimeoutRef.current); holdTimeoutRef.current = null } stopChargeSound(); holdRef.current.start = 0 }
-  const onPointerLeave = () => { if (isHolding) { setIsHolding(false); if (holdVibeRef.current) { clearInterval(holdVibeRef.current); holdVibeRef.current = null } if (holdTimeoutRef.current) { clearTimeout(holdTimeoutRef.current); holdTimeoutRef.current = null } stopChargeSound(); holdRef.current.start = 0 } }
+  const onPointerCancel = () => { setIsHolding(false); if (holdVibeRef.current) { clearInterval(holdVibeRef.current); holdVibeRef.current = null } if (holdTimeoutRef.current) { clearTimeout(holdTimeoutRef.current); holdTimeoutRef.current = null } if (powerRafRef.current) { cancelAnimationFrame(powerRafRef.current); powerRafRef.current = null } stopChargeSound(); holdRef.current.start = 0; setPowerProgress(0) }
+  const onPointerLeave = () => { if (isHolding) { setIsHolding(false); if (holdVibeRef.current) { clearInterval(holdVibeRef.current); holdVibeRef.current = null } if (holdTimeoutRef.current) { clearTimeout(holdTimeoutRef.current); holdTimeoutRef.current = null } if (powerRafRef.current) { cancelAnimationFrame(powerRafRef.current); powerRafRef.current = null } stopChargeSound(); holdRef.current.start = 0; setPowerProgress(0) } }
 
   return (
     <div style={{ display: 'grid', placeItems: 'center', gap: 12 }}>
@@ -191,7 +222,19 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
         style={{ cursor: (spinning || disabled) ? 'not-allowed' : 'pointer', pointerEvents: (spinning || disabled) ? 'none' : 'auto' }}
       >
         {isHolding && (
-          <div className="hold-ring" aria-hidden />
+          <>
+            {/* Barra de fuerza radial (progreso) */}
+            <div
+              className="power-ring"
+              aria-hidden
+              style={{
+                background: powerGradient(powerProgress),
+                opacity: 0.85 + powerProgress*0.15,
+                boxShadow: `0 0 ${6 + powerProgress*10}px ${2 + powerProgress*4}px rgba(255,100,0,${0.25 + powerProgress*0.35})`
+              }}
+            />
+            <div className="hold-ring" aria-hidden />
+          </>
         )}
         {showFlames && (
           <div className="flame-ring" aria-hidden />
