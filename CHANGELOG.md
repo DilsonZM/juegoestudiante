@@ -5,6 +5,11 @@
 - Mensaje reforzado con efecto fuego (clase `power-hint-fire`) y animaciones adicionales.
 - No se repite tras usarse hold (persistido en localStorage `powerHintV3Shown`).
 
+## 0.2.7 - 2025-08-21
+- Hint TURBO ahora es un modal flotante cinematográfico con fondo fuego, botón "¡Entendido!" y animaciones.
+- Eliminado badge inferior (libera espacio visual en la zona de juego).
+- Autenticación Google: vuelve a flujo nativo estándar popup primero y fallback redirect solo si el popup es bloqueado (evita loops de redirect tras limpiar caché).
+
 ## 0.2.4 - 2025-08-21
 - Ajuste final Auth Google: redirect universal (excepto localhost) para suprimir warnings COOP y mejorar compatibilidad WebView.
 
