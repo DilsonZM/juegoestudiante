@@ -194,8 +194,9 @@ export default function App(){
       // Rachas
       setStreak(prev => {
         const next = isCorrect ? prev + 1 : 0
-        // Hit milestones: 3, 7, >10
-        if (isCorrect && (next === 3 || next === 7 || next === 10 || next > 10)) {
+        // Hitos: 3, 7, 10 y luego cada 5 después de 10 (15, 20, ...)
+        const isMilestone = isCorrect && (next === 3 || next === 7 || next === 10 || (next > 10 && next % 5 === 0))
+        if (isMilestone) {
           const level = next >= 10 ? 3 : next >= 7 ? 2 : 1
           setStreakModal({ open: true, level })
           try { sfxStreak(soundOn, level) } catch { /* ignore */ }
