@@ -10,6 +10,7 @@ import {
   limit,
   getCountFromServer,
   where,
+  onSnapshot,
 } from 'firebase/firestore'
 
 export async function submitSpinAndAccumulate(db, uid, displayName, result) {
@@ -39,4 +40,16 @@ export async function fetchUserRankByScore(db, score) {
   const qCount = query(collection(db, 'userstats'), where('totalScore', '>', score || 0))
   const agg = await getCountFromServer(qCount)
   return (agg.data().count || 0) + 1
+}
+
+export function subscribeLeaderboard(db, onData, onError) {
+  const qTop = query(collection(db, 'userstats'), orderBy('totalScore', 'desc'), limit(10))
+  const unsub = onSnapshot(qTop, (snap) => {
+    const rows = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    onData?.(rows)
+  }, (err) => {
+    console.error('Top10 realtime error:', err)
+    onError?.(err)
+  })
+  return unsub
 }

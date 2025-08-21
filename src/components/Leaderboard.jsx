@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { fetchLeaderboard, fetchUserRankByScore } from '../services/firestore'
+import { fetchLeaderboard, fetchUserRankByScore, subscribeLeaderboard } from '../services/firestore'
 
 function MedalBadge({ rank }) {
   const bg = rank === 1 ? '#fbbf24' : rank === 2 ? '#d1d5db' : rank === 3 ? '#cd7f32' : null
@@ -40,11 +40,19 @@ export default function Leaderboard({ db, currentUser, myStats }){
   }, [db])
 
   useEffect(() => {
-    load()
+    // Suscripción en tiempo real al Top 10
+    setLoading(true)
+    const unsub = subscribeLeaderboard(db, (data) => {
+      setRows(data)
+      setLoading(false)
+    }, (err) => {
+      console.error('Realtime Top10 failed; fallback to manual refresh.', err)
+      setLoading(false)
+    })
     const h = () => load()
     window.addEventListener('reload-top10', h)
-    return () => window.removeEventListener('reload-top10', h)
-  }, [load])
+    return () => { window.removeEventListener('reload-top10', h); unsub && unsub() }
+  }, [db, load])
 
   useEffect(() => {
     (async () => {
