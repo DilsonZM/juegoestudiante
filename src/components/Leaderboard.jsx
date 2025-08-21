@@ -26,6 +26,7 @@ export default function Leaderboard({ db, currentUser, myStats }){
   const prevRowsRef = useRef([])
   const highlightMapRef = useRef(new Map())
   const riseMapRef = useRef(new Map())
+  const firstLoadRef = useRef(true)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -46,14 +47,22 @@ export default function Leaderboard({ db, currentUser, myStats }){
     // Suscripción en tiempo real al Top 10 con detección de cambios para resaltar filas
     setLoading(true)
     const unsub = subscribeLeaderboard(db, (data) => {
+      // En el primer snapshot no resaltamos, solo primamos el estado
+      if (firstLoadRef.current) {
+        prevRowsRef.current = data
+        setRows(data)
+        setLoading(false)
+        firstLoadRef.current = false
+        return
+      }
       const prev = prevRowsRef.current
       const idToIndexPrev = new Map(prev.map((r, i) => [r.id, { i, r }]))
       const now = Date.now()
       data.forEach((r, idx) => {
         const prevInfo = idToIndexPrev.get(r.id)
-        const changedScore = !prevInfo || (prevInfo.r.totalScore !== r.totalScore)
-        const changedPos = prevInfo && (prevInfo.i !== idx)
-        if (changedScore || changedPos || !prevInfo) {
+        const changedScore = !!prevInfo && (prevInfo.r.totalScore !== r.totalScore)
+        const changedPos = !!prevInfo && (prevInfo.i !== idx)
+        if (changedScore || changedPos) {
           highlightMapRef.current.set(r.id, now)
         }
         if (changedPos && prevInfo.i > idx) {
