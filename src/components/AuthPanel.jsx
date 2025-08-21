@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Swal from 'sweetalert2'
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
@@ -18,6 +18,84 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
   const inAppInfo = useMemo(() => getInAppBrowserInfo(), [])
+
+  const openInExternal = useCallback(async () => {
+    const { isAndroid, isIOS, label } = inAppInfo
+    const cleanUrl = window.location.href.split('#')[0]
+    const prot = window.location.protocol.replace(':','') || 'https'
+    try {
+      // Toast informativo breve
+      await Swal.fire({
+        toast: true,
+        position: 'bottom',
+        timer: 1800,
+        showConfirmButton: false,
+        icon: 'info',
+        title: 'Saliendo al navegador…'
+      })
+    } catch (e) { void e }
+    try {
+      if (isAndroid) {
+        const intentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=${prot};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(cleanUrl)};end`
+        // Crear un enlace y hacer click programático puede funcionar mejor que location.href
+        const a = document.createElement('a')
+        a.href = intentUrl
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        return
+      } else if (isIOS) {
+        const chromeUrl = cleanUrl.replace(/^https?:\/\//, 'googlechrome://')
+        window.location.href = chromeUrl
+        return
+      } else {
+        window.open(cleanUrl, '_blank', 'noopener,noreferrer')
+        return
+      }
+    } catch (err) {
+      console.warn('Abrir externo falló', err)
+    }
+    // Fallback de instrucciones
+    Swal.fire({
+      icon: 'info',
+      title: 'Abrir en navegador',
+      html: `<div style="text-align:left">`+
+            `<p>Estás dentro de ${label || 'un navegador embebido'}.</p>`+
+            `<p>Para continuar con Google:</p>`+
+            `<ol style="padding-left:18px;line-height:1.4">`+
+            `<li>Toca el menú (⋯) o el ícono de compartir.</li>`+
+            `<li>Elige <b>"Abrir en navegador"</b> o <b>"Abrir en Chrome/Safari"</b>.</li>`+
+            `</ol>`+
+            `<p>O pulsa <b>Copiar enlace</b> y pégalo en tu navegador.</p>`+
+            `</div>`,
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#1dd1c6',
+      background: '#131a3a',
+      color: '#e8ecf4'
+    })
+  }, [inAppInfo])
+
+  useEffect(() => {
+    // Mostrar prompt automático una sola vez si detectamos in-app (LinkedIn, etc.)
+    if (!inAppInfo.isInApp) return
+    try {
+      if (sessionStorage.getItem('inAppWarned')) return
+      sessionStorage.setItem('inAppWarned', '1')
+  } catch (e) { void e }
+    Swal.fire({
+      icon: 'warning',
+      title: 'Estás en un navegador embebido',
+      text: 'Para iniciar sesión con Google, es mejor abrir este juego en tu navegador (Chrome/Safari).',
+      showDenyButton: true,
+      confirmButtonText: 'Abrir en navegador',
+      denyButtonText: 'Seguir aquí',
+      confirmButtonColor: '#1dd1c6',
+      background: '#131a3a',
+      color: '#e8ecf4'
+    }).then(res => {
+      if (res.isConfirmed) openInExternal()
+    })
+  }, [inAppInfo, openInExternal])
 
   const saveProfile = useCallback(async (uid, profile) => {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
@@ -120,50 +198,15 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
             <button
               type="button"
               className="btn"
-              onClick={() => {
-                const { isAndroid, isIOS, label } = inAppInfo
-                const cleanUrl = window.location.href.split('#')[0]
-                const prot = window.location.protocol.replace(':','') || 'https'
-                try {
-                  if (isAndroid) {
-                    // Intento 1: intent:// para forzar Chrome
-                    const intentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=${prot};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(cleanUrl)};end`
-                    window.location.href = intentUrl
-                    return
-                  } else if (isIOS) {
-                    // Intento 1 (iOS): abrir en Chrome si está instalado
-                    const chromeUrl = cleanUrl.replace(/^https?:\/\//, 'googlechrome://')
-                    window.location.href = chromeUrl
-                    // Si el esquema no existe, iOS lo ignora; mostramos instrucciones abajo
-                  } else {
-                    // Otros: abrir en nueva pestaña (puede seguir en in-app, pero algunos respetan _blank)
-                    window.open(cleanUrl, '_blank', 'noopener,noreferrer')
-                    return
-                  }
-                } catch (err) {
-                  console.warn('Intento de abrir externo falló', err)
-                }
-                // Fallback: guía visual para salir del navegador embebido
-                Swal.fire({
-                  icon: 'info',
-                  title: 'Abrir en navegador',
-                  html: `<div style="text-align:left">`+
-                        `<p>Estás dentro de ${label || 'un navegador embebido'}.</p>`+
-                        `<p>Para continuar con Google:</p>`+
-                        `<ol style="padding-left:18px;line-height:1.4">`+
-                        `<li>Toca el menú (⋯) o el ícono de compartir.</li>`+
-                        `<li>Elige <b>"Abrir en navegador"</b> o <b>"Abrir en Chrome/Safari"</b>.</li>`+
-                        `</ol>`+
-                        `<p>También puedes pulsar <b>Copiar enlace</b> y pegarlo en tu navegador.</p>`+
-                        `</div>`,
-                  confirmButtonText: 'Entendido',
-                  confirmButtonColor: '#1dd1c6',
-                  background: '#131a3a',
-                  color: '#e8ecf4'
-                })
-              }}
+              onClick={openInExternal}
               style={{ border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'8px 10px' }}
             >Abrir en navegador</button>
+            {inAppInfo.isInApp && inAppInfo.isAndroid && (
+              <a
+                href={`intent://${typeof window!=='undefined' ? window.location.host : ''}${typeof window!=='undefined' ? window.location.pathname : ''}${typeof window!=='undefined' ? window.location.search : ''}#Intent;scheme=${typeof window!=='undefined' ? window.location.protocol.replace(':','') : 'https'};package=com.android.chrome;S.browser_fallback_url=${typeof window!=='undefined' ? encodeURIComponent(window.location.href.split('#')[0]) : ''};end`}
+                style={{ fontSize:12, color:'#fbbf24', marginLeft:8 }}
+              >Enlace directo (Android)</a>
+            )}
             <button
               type="button"
               className="btn"
