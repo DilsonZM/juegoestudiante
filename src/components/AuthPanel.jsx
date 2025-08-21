@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import Swal from 'sweetalert2'
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
@@ -19,104 +19,8 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
   const [showPwd, setShowPwd] = useState(false)
   const inAppInfo = useMemo(() => getInAppBrowserInfo(), [])
 
-  const openInExternal = useCallback(async () => {
-    const { isAndroid, isIOS, label } = inAppInfo
-    const cleanUrl = window.location.href.split('#')[0]
-    const prot = window.location.protocol.replace(':','') || 'https'
-    try {
-      // Toast informativo breve
-      await Swal.fire({
-        toast: true,
-        position: 'bottom',
-        timer: 1800,
-        showConfirmButton: false,
-        icon: 'info',
-        title: 'Saliendo al navegador…'
-      })
-    } catch (e) { void e }
-    try {
-      if (isAndroid) {
-        const intentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=${prot};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(cleanUrl)};end`
-        // Copia el enlace primero para que el usuario pueda pegarlo en Chrome si el intento es bloqueado
-        try { await navigator.clipboard.writeText(cleanUrl) } catch (e) { void e }
-        // Programa un fallback: si seguimos visibles después de intentar abrir intent://, muestra instrucciones
-        setTimeout(() => {
-          if (document.visibilityState === 'visible') {
-            Swal.fire({
-              icon: 'info',
-              title: 'No se pudo abrir automáticamente',
-              html: `<div style="text-align:left">`+
-                    `<p>LinkedIn puede bloquear la salida directa.</p>`+
-                    `<p>El enlace ya fue <b>copiado</b>. Abre <b>Chrome</b> y pégalo en la barra de direcciones.</p>`+
-                    `<p>O toca el menú (⋯) y elige <b>"Abrir en navegador"</b>.</p>`+
-                    `</div>`,
-              confirmButtonText: 'Entendido',
-              confirmButtonColor: '#1dd1c6',
-              background: '#131a3a',
-              color: '#e8ecf4'
-            })
-          }
-        }, 1200)
-        // Intento con intent://
-        // Crear un enlace y hacer click programático puede funcionar mejor que location.href
-        const a = document.createElement('a')
-        a.href = intentUrl
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        return
-      } else if (isIOS) {
-        const chromeUrl = cleanUrl.replace(/^https?:\/\//, 'googlechrome://')
-        window.location.href = chromeUrl
-        return
-      } else {
-        window.open(cleanUrl, '_blank', 'noopener,noreferrer')
-        return
-      }
-    } catch (err) {
-      console.warn('Abrir externo falló', err)
-    }
-    // Fallback de instrucciones
-    Swal.fire({
-      icon: 'info',
-      title: 'Abrir en navegador',
-      html: `<div style="text-align:left">`+
-            `<p>Estás dentro de ${label || 'un navegador embebido'}.</p>`+
-            `<p>Para continuar con Google:</p>`+
-            `<ol style="padding-left:18px;line-height:1.4">`+
-            `<li>Toca el menú (⋯) o el ícono de compartir.</li>`+
-            `<li>Elige <b>"Abrir en navegador"</b> o <b>"Abrir en Chrome/Safari"</b>.</li>`+
-            `</ol>`+
-            `<p>O pulsa <b>Copiar enlace</b> y pégalo en tu navegador.</p>`+
-            `</div>`,
-      confirmButtonText: 'Entendido',
-      confirmButtonColor: '#1dd1c6',
-      background: '#131a3a',
-      color: '#e8ecf4'
-    })
-  }, [inAppInfo])
-
-  useEffect(() => {
-    // Mostrar prompt automático una sola vez si detectamos in-app (LinkedIn, etc.)
-    if (!inAppInfo.isInApp) return
-    try {
-      if (sessionStorage.getItem('inAppWarned')) return
-      sessionStorage.setItem('inAppWarned', '1')
-  } catch (e) { void e }
-    Swal.fire({
-      icon: 'warning',
-      title: 'Estás en un navegador embebido',
-      text: 'Para iniciar sesión con Google, es mejor abrir este juego en tu navegador (Chrome/Safari).',
-      showDenyButton: true,
-      confirmButtonText: 'Abrir en navegador',
-      denyButtonText: 'Seguir aquí',
-      confirmButtonColor: '#1dd1c6',
-      background: '#131a3a',
-      color: '#e8ecf4'
-    }).then(res => {
-      if (res.isConfirmed) openInExternal()
-    })
-  }, [inAppInfo, openInExternal])
+  // Nota: intencionalmente no forzamos la salida a navegador externo.
+  // LinkedIn y otros in-app bloquean estos intentos; dejamos un aviso con enlace directo.
 
   const saveProfile = useCallback(async (uid, profile) => {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
@@ -213,18 +117,13 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
         <div className="alert" role="status" style={{ marginTop: 10, background:'#2c1f00', border:'1px solid #6b4e00', color:'#f3e8c3' }}>
           <b>Estás dentro de {inAppInfo.label || 'un navegador embebido'}.</b>
           <div style={{ marginTop: 6, fontSize: 13, opacity: .95 }}>
-            Para iniciar con Google, abre este juego en tu navegador (Chrome/Safari) y vuelve a intentar.
+            Por políticas de LinkedIn, Google puede fallar dentro de este navegador. Abre el juego directamente en tu navegador (Chrome/Safari).
           </div>
           <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
-            <button
-              type="button"
-              className="btn"
-              onClick={openInExternal}
-              style={{ border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'8px 10px' }}
-            >Abrir en navegador</button>
             {inAppInfo.isInApp && (
               <a
                 href={typeof window!=='undefined' ? window.location.href.split('#')[0] : '#'}
+                target="_blank" rel="noopener noreferrer"
                 style={{ fontSize:12, color:'#fbbf24', marginLeft:8 }}
               >Enlace directo</a>
             )}
