@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import Swal from 'sweetalert2'
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { loginWithGoogle } from '../services/auth'
 import { getFirebaseErrorMsg } from '../firebaseErrorMap'
 import { showErrorSwal } from '../swal'
+import { getInAppBrowserInfo } from '../utils/inAppBrowser'
 
 export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
   const [mode, setMode] = useState('login')
@@ -16,6 +17,7 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
+  const inAppInfo = useMemo(() => getInAppBrowserInfo(), [])
 
   const saveProfile = useCallback(async (uid, profile) => {
     await setDoc(doc(db, 'users', uid), { ...profile, createdAt: serverTimestamp() }, { merge: true })
@@ -107,6 +109,51 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
             : 'Te enviaremos un correo para restablecer tu contraseña'}
         </p>
       </header>
+
+      {inAppInfo.isInApp && (
+        <div className="alert" role="status" style={{ marginTop: 10, background:'#2c1f00', border:'1px solid #6b4e00', color:'#f3e8c3' }}>
+          <b>Estás dentro de {inAppInfo.label || 'un navegador embebido'}.</b>
+          <div style={{ marginTop: 6, fontSize: 13, opacity: .95 }}>
+            Para iniciar con Google, abre este juego en tu navegador (Chrome/Safari) y vuelve a intentar.
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:8, flexWrap:'wrap' }}>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                try {
+                  const url = window.location.href
+                  // iOS sugiere abrir en Safari con target _blank; Android intentará el navegador predeterminado
+                  window.open(url, '_blank', 'noopener,noreferrer')
+                } catch (err) {
+                  console.warn('No se pudo abrir en navegador externo', err)
+                }
+              }}
+              style={{ border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'8px 10px' }}
+            >Abrir en navegador</button>
+            <button
+              type="button"
+              className="btn"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href)
+                  await Swal.fire({
+                    toast: true,
+                    position: 'bottom',
+                    timer: 1800,
+                    showConfirmButton: false,
+                    icon: 'success',
+                    title: 'Enlace copiado. Pégalo en tu navegador.'
+                  })
+                } catch (err) {
+                  console.warn('No se pudo copiar enlace al portapapeles', err)
+                }
+              }}
+              style={{ border:'1px solid #3f3f46', background:'#0f152d', color:'#e8ecf4', borderRadius:10, padding:'8px 10px' }}
+            >Copiar enlace</button>
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
         {['login', 'register', 'reset'].map(m => (
