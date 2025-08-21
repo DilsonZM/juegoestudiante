@@ -53,3 +53,16 @@ export function subscribeLeaderboard(db, onData, onError) {
   })
   return unsub
 }
+
+export function subscribeUserRankByScore(db, score, onData, onError) {
+  // Suscribirse a todos con score mayor al del usuario y derivar el rank como count+1
+  const q = query(collection(db, 'userstats'), where('totalScore', '>', score || 0))
+  const unsub = onSnapshot(q, (snap) => {
+    const rank = (snap.size || 0) + 1
+    onData?.(rank)
+  }, (err) => {
+    console.error('User rank realtime error:', err)
+    onError?.(err)
+  })
+  return unsub
+}

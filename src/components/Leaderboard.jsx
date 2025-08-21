@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { fetchLeaderboard, fetchUserRankByScore, subscribeLeaderboard } from '../services/firestore'
+import { fetchLeaderboard, subscribeLeaderboard, subscribeUserRankByScore } from '../services/firestore'
 
 function MedalBadge({ rank }) {
   const bg = rank === 1 ? '#fbbf24' : rank === 2 ? '#d1d5db' : rank === 3 ? '#cd7f32' : null
@@ -23,6 +23,9 @@ export default function Leaderboard({ db, currentUser, myStats }){
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [myRank, setMyRank] = useState(null)
+  const prevRowsRef = useRef([])
+  const highlightMapRef = useRef(new Map())
+  const riseMapRef = useRef(new Map())
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -40,10 +43,26 @@ export default function Leaderboard({ db, currentUser, myStats }){
   }, [db])
 
   useEffect(() => {
-    // Suscripción en tiempo real al Top 10
+    // Suscripción en tiempo real al Top 10 con detección de cambios para resaltar filas
     setLoading(true)
     const unsub = subscribeLeaderboard(db, (data) => {
+      const prev = prevRowsRef.current
+      const idToIndexPrev = new Map(prev.map((r, i) => [r.id, { i, r }]))
+      const now = Date.now()
+      data.forEach((r, idx) => {
+        const prevInfo = idToIndexPrev.get(r.id)
+        const changedScore = !prevInfo || (prevInfo.r.totalScore !== r.totalScore)
+        const changedPos = prevInfo && (prevInfo.i !== idx)
+        if (changedScore || changedPos || !prevInfo) {
+          highlightMapRef.current.set(r.id, now)
+        }
+        if (changedPos && prevInfo.i > idx) {
+          // Subió de posición: animación de subida
+          riseMapRef.current.set(r.id, now)
+        }
+      })
       setRows(data)
+      prevRowsRef.current = data
       setLoading(false)
     }, (err) => {
       console.error('Realtime Top10 failed; fallback to manual refresh.', err)
@@ -55,18 +74,16 @@ export default function Leaderboard({ db, currentUser, myStats }){
   }, [db, load])
 
   useEffect(() => {
-    (async () => {
-      if (!currentUser) { setMyRank(null); return }
-      const inTop = rows.some(r => r.id === currentUser.uid)
-      if (inTop) { setMyRank(null); return }
-      try {
-        const rank = await fetchUserRankByScore(db, myStats?.totalScore || 0)
-        setMyRank(rank)
-      } catch (e) {
-        console.error('rank error:', e)
-        setMyRank(null)
-      }
-    })()
+    if (!currentUser) { setMyRank(null); return undefined }
+    const inTop = rows.some(r => r.id === currentUser.uid)
+    if (inTop) { setMyRank(null); return undefined }
+    // Suscribirse al rango personal en tiempo real
+    const unsub = subscribeUserRankByScore(db, myStats?.totalScore || 0, (rank) => {
+      setMyRank(rank)
+    }, (err) => {
+      console.error('rank error:', err)
+    })
+    return () => { unsub && unsub() }
   }, [db, rows, currentUser, myStats?.totalScore])
 
   const isLogged = !!currentUser
@@ -79,27 +96,33 @@ export default function Leaderboard({ db, currentUser, myStats }){
     totalSpins: myStats?.totalSpins || 0
   } : null
 
-  const renderRow = (r, i, opts={}) => (
-    <tr key={opts.key || r.id} style={{borderBottom:'1px solid #222', background: opts.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'}}>
-      <td style={{padding:'6px 8px 6px 8px', width:'2.8ch', textAlign:'right'}}>#{i}</td>
-  <td style={{padding: isMobile ? '6px 14px 6px 10px' : '6px 24px 6px 10px'}}>
-        <div style={{ display:'inline-flex', alignItems:'center', minWidth:0 }}>
-          <MedalBadge rank={i} />
-          <span style={{
-    display:'inline-block',
-    maxWidth: 'unset',
-    overflow: 'visible',
-    textOverflow: 'clip',
-    whiteSpace: 'nowrap',
-    wordBreak: 'keep-all',
-    overflowWrap: 'normal'
-          }}>{r.displayName || r.id}</span>
-        </div>
-      </td>
-  <td style={{padding:'6px 8px', textAlign:'center'}}><b>{r.totalScore || 0}</b></td>
-  <td style={{padding:'6px 8px', textAlign:'center'}}>{r.totalSpins || 0}</td>
-    </tr>
-  )
+  const renderRow = (r, i, opts={}) => {
+    const now = Date.now()
+    const highlighted = highlightMapRef.current.has(r.id) && (now - (highlightMapRef.current.get(r.id) || 0) < 2200)
+    const rose = riseMapRef.current.has(r.id) && (now - (riseMapRef.current.get(r.id) || 0) < 900)
+    const trClass = `${highlighted ? 'lb-row-highlight' : ''} ${rose ? 'lb-rise' : ''}`.trim()
+    return (
+      <tr key={opts.key || r.id} className={trClass} style={{borderBottom:'1px solid #222'}}>
+        <td style={{padding:'6px 8px 6px 8px', width:'2.8ch', textAlign:'right'}}>#{i}</td>
+        <td style={{padding: isMobile ? '6px 14px 6px 10px' : '6px 24px 6px 10px'}}>
+          <div style={{ display:'inline-flex', alignItems:'center', minWidth:0 }}>
+            <MedalBadge rank={i} />
+            <span className={highlighted ? 'lb-text-pop' : ''} style={{
+              display:'inline-block',
+              maxWidth: 'unset',
+              overflow: 'visible',
+              textOverflow: 'clip',
+              whiteSpace: 'nowrap',
+              wordBreak: 'keep-all',
+              overflowWrap: 'normal'
+            }}>{r.displayName || r.id}</span>
+          </div>
+        </td>
+        <td style={{padding:'6px 8px', textAlign:'center'}}><b className={highlighted ? 'lb-text-pop' : ''}>{r.totalScore || 0}</b></td>
+        <td style={{padding:'6px 8px', textAlign:'center'}}>{r.totalSpins || 0}</td>
+      </tr>
+    )
+  }
 
   return (
     <div style={{border:'1px solid #333',borderRadius:12,padding:16, maxWidth: 1024, margin: '0 auto'}}>

@@ -649,3 +649,30 @@ html, body { overflow-x: hidden; }
   }
   /* (sin 5ª columna) */
 }
+
+/* ===== Leaderboard: highlight y animaciones ===== */
+.lb-row-highlight {
+  background: rgba(251, 191, 36, 0.15) !important; /* amber-400 */
+  animation: lbFlash 1.6s ease-out;
+}
+.lb-text-pop {
+  display: inline-block;
+  animation: lbPop 0.35s ease-out;
+}
+.lb-rise {
+  animation: lbRise 0.6s ease-out;
+}
+@keyframes lbFlash {
+  0% { background: rgba(251, 191, 36, 0.35); }
+  50% { background: rgba(251, 191, 36, 0.18); }
+  100% { background: transparent; }
+}
+@keyframes lbPop {
+  0% { transform: scale(1); color: #fde68a; }
+  40% { transform: scale(1.14); color: #fbbf24; }
+  100% { transform: scale(1); color: inherit; }
+}
+@keyframes lbRise {
+  0% { transform: translateY(6px); }
+  100% { transform: translateY(0); }
+}
