@@ -5,6 +5,11 @@
 - Doble destello (segundo flame burst) al soltar con potencia completa.
 - Vibración distintiva al llegar al 100% de carga.
 
+## 0.2.2 - 2025-08-21
+- Press & hold habilitado también en el botón "Girar ruleta" (misma lógica de carga que sobre la rueda).
+- Prevención de doble disparo (click tras pointerup).
+- Limpieza menor (parámetro no usado, consistencia estados de power).
+
 ## 0.2.0 - 2025-08-21
 - Barra de fuerza radial alrededor de la ruleta (press & hold) con relleno progresivo.
 - Gradiente dinámico verde→amarillo→naranja→rojo con brillo tipo candela.

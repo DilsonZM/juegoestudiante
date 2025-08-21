@@ -295,7 +295,15 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
   <button
         className="spin-btn"
         onContextMenu={(e)=>{ e.preventDefault(); e.stopPropagation(); }}
-        onClick={()=>spin(0)}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onPointerLeave={onPointerLeave}
+  onClick={()=>{
+          // Evita doble ejecución si hubo hold (pointer genera click al soltar)
+          if (holdRef.current.handledClick) { holdRef.current.handledClick = false; return }
+          spin(0)
+        }}
         disabled={spinning || disabled}
         style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #3f3f46', background: '#18181b', color: '#fafafa', opacity: (spinning || disabled) ? .7 : 1 }}>
         {spinning ? 'Girando…' : '🎡 ¡Girar ruleta!'}
