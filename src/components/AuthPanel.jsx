@@ -121,13 +121,46 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
               type="button"
               className="btn"
               onClick={() => {
+                const { isAndroid, isIOS, label } = inAppInfo
+                const cleanUrl = window.location.href.split('#')[0]
+                const prot = window.location.protocol.replace(':','') || 'https'
                 try {
-                  const url = window.location.href
-                  // iOS sugiere abrir en Safari con target _blank; Android intentará el navegador predeterminado
-                  window.open(url, '_blank', 'noopener,noreferrer')
+                  if (isAndroid) {
+                    // Intento 1: intent:// para forzar Chrome
+                    const intentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=${prot};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(cleanUrl)};end`
+                    window.location.href = intentUrl
+                    return
+                  } else if (isIOS) {
+                    // Intento 1 (iOS): abrir en Chrome si está instalado
+                    const chromeUrl = cleanUrl.replace(/^https?:\/\//, 'googlechrome://')
+                    window.location.href = chromeUrl
+                    // Si el esquema no existe, iOS lo ignora; mostramos instrucciones abajo
+                  } else {
+                    // Otros: abrir en nueva pestaña (puede seguir en in-app, pero algunos respetan _blank)
+                    window.open(cleanUrl, '_blank', 'noopener,noreferrer')
+                    return
+                  }
                 } catch (err) {
-                  console.warn('No se pudo abrir en navegador externo', err)
+                  console.warn('Intento de abrir externo falló', err)
                 }
+                // Fallback: guía visual para salir del navegador embebido
+                Swal.fire({
+                  icon: 'info',
+                  title: 'Abrir en navegador',
+                  html: `<div style="text-align:left">`+
+                        `<p>Estás dentro de ${label || 'un navegador embebido'}.</p>`+
+                        `<p>Para continuar con Google:</p>`+
+                        `<ol style="padding-left:18px;line-height:1.4">`+
+                        `<li>Toca el menú (⋯) o el ícono de compartir.</li>`+
+                        `<li>Elige <b>"Abrir en navegador"</b> o <b>"Abrir en Chrome/Safari"</b>.</li>`+
+                        `</ol>`+
+                        `<p>También puedes pulsar <b>Copiar enlace</b> y pegarlo en tu navegador.</p>`+
+                        `</div>`,
+                  confirmButtonText: 'Entendido',
+                  confirmButtonColor: '#1dd1c6',
+                  background: '#131a3a',
+                  color: '#e8ecf4'
+                })
               }}
               style={{ border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'8px 10px' }}
             >Abrir en navegador</button>
