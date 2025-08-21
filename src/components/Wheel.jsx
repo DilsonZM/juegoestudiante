@@ -180,6 +180,7 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
         aria-label="Ruleta: tocar o presionar para girar"
         aria-disabled={spinning || disabled}
         tabIndex={0}
+  onContextMenu={(e)=>{ e.preventDefault(); e.stopPropagation(); }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
