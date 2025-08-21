@@ -48,7 +48,9 @@ export default function App(){
   const splashIdRef = useRef(0)
 
   // Sonido y rachas
-  const [soundOn, setSoundOn] = useState(true)
+  const [soundOn, setSoundOn] = useState(()=>{
+    try { const v = localStorage.getItem('soundOn'); return v === null ? true : v === '1' } catch { return true }
+  })
   const [streak, setStreak] = useState(0)
   const [streakModal, setStreakModal] = useState({ open: false, level: 0 })
   const [showSettings, setShowSettings] = useState(false)
@@ -225,6 +227,11 @@ export default function App(){
     showSplashFor(2500, '¡Gracias!', 'por participar en la actividad de Gobierno del Dato')
     try{ await signOut(auth) } catch(e){ console.error(e) }
   }
+
+  // Persistir preferencia de sonido
+  useEffect(()=>{
+    try { localStorage.setItem('soundOn', soundOn ? '1':'0') } catch { /* ignore */ }
+  }, [soundOn])
 
   return (
     <div style={{minHeight:'100vh',background:'#0b0b0b',color:'#eaeaea',padding:16,fontFamily:'system-ui, sans-serif'}}>

@@ -210,7 +210,7 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
             background: '#0c0c0c'
           }}
         >
-          {SEGMENTS.map((s, i) => {
+      {SEGMENTS.map((s, i) => {
             const startAngle = i * (360 / SEGMENTS.length)
             const endAngle = startAngle + (360 / SEGMENTS.length)
             const largeArc = endAngle - startAngle <= 180 ? 0 : 1
@@ -222,7 +222,7 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
             return (
               <g key={s.label}>
                 <path d={d} fill={s.color} stroke="#0b0b0b" strokeWidth="0.6" />
-                <text x={mid.x} y={mid.y} fontSize={fs} fill="#0b0b0b" textAnchor="middle" dominantBaseline="middle">
+        <text x={mid.x} y={mid.y} fontSize={fs} fill="#0b0b0b" textAnchor="middle" dominantBaseline="middle" style={{userSelect:'none',WebkitUserSelect:'none',pointerEvents:'none'}}>
                   {s.label}
                 </text>
               </g>
@@ -232,7 +232,12 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
         </svg>
       </div>
 
-  <button onClick={spin} disabled={spinning || disabled} style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #3f3f46', background: '#18181b', color: '#fafafa', opacity: (spinning || disabled) ? .7 : 1 }}>
+  <button
+        className="spin-btn"
+        onContextMenu={(e)=>{ e.preventDefault(); e.stopPropagation(); }}
+        onClick={()=>spin(0)}
+        disabled={spinning || disabled}
+        style={{ padding: '10px 16px', borderRadius: 10, border: '1px solid #3f3f46', background: '#18181b', color: '#fafafa', opacity: (spinning || disabled) ? .7 : 1 }}>
         {spinning ? 'Girando…' : '🎡 ¡Girar ruleta!'}
       </button>
     </div>
