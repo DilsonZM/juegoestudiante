@@ -27,6 +27,7 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
   const holdUsedRef = useRef(false)
   const normalTapCountRef = useRef(0)
   const currentSpinPowerRef = useRef(0)
+  const hintTimeoutRef = useRef(null)
   const holdRef = useRef({ start: 0, handledClick: false })
   const holdVibeRef = useRef(null)
   const audioRef = useRef({ ctx: null, osc: null, gain: null })
@@ -60,6 +61,8 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
           if (!localStorage.getItem('powerHintV3Shown')) {
     setShowTapHint(true)
             localStorage.setItem('powerHintV3Shown','1')
+    if (hintTimeoutRef.current) { clearTimeout(hintTimeoutRef.current); hintTimeoutRef.current = null }
+    hintTimeoutRef.current = setTimeout(()=> { setShowTapHint(false); hintTimeoutRef.current = null }, 3000)
           }
         } catch { /* noop */ }
       }
@@ -332,17 +335,14 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
         {spinning ? 'Girando…' : '🎡 ¡Girar ruleta!'}
       </button>
       {showTapHint && (
-        <div className="turbo-hint-overlay" role="dialog" aria-modal="true" aria-label="Cómo activar turbo">
-          <div className="turbo-hint-box">
+        <div className="turbo-hint-overlay" role="alert" aria-live="assertive">
+          <div className="turbo-hint-box turbo-neon">
             <div className="turbo-hint-fire-bg" aria-hidden></div>
-            <h3>🔥 CARGA EL TURBO 🔥</h3>
-            <p>Mantén presionado sobre la ruleta o el botón para acumular potencia y obtener MÁS VUELTAS. Suelta para un estallido de fuego.</p>
-            <ul>
-              <li>Hasta +6 vueltas extra</li>
-              <li>Vibración y efecto de fuego</li>
-              <li>Pulso al 100% de carga</li>
-            </ul>
-            <button type="button" className="turbo-hint-close" onClick={()=>setShowTapHint(false)}>¡Entendido!</button>
+            <div className="turbo-hint-glow" aria-hidden></div>
+            <div className="turbo-hint-text">MODO TURBO: mantén presionado 🔥</div>
+            <div className="turbo-hint-flames" aria-hidden>
+              <span/><span/><span/><span/><span/><span/>
+            </div>
           </div>
         </div>
       )}
