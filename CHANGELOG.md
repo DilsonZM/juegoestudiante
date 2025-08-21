@@ -10,6 +10,11 @@
 - Eliminado badge inferior (libera espacio visual en la zona de juego).
 - Autenticación Google: vuelve a flujo nativo estándar popup primero y fallback redirect solo si el popup es bloqueado (evita loops de redirect tras limpiar caché).
 
+## 0.2.8 - 2025-08-21
+- Modal TURBO refinado: versión neon compacta auto-cierre en 3s (sin necesidad de botón) para menor fricción.
+- Animaciones de llamas escalonadas + glow giratorio con gradiente cónico.
+- Limpieza: se eliminó lógica de timeout manual anterior y se centraliza ref para evitar fugas.
+
 ## 0.2.4 - 2025-08-21
 - Ajuste final Auth Google: redirect universal (excepto localhost) para suprimir warnings COOP y mejorar compatibilidad WebView.
 
