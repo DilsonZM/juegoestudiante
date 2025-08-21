@@ -355,7 +355,6 @@ export default function App(){
                   profileError={profileError}
                   onOpenTop10={()=>setShowLbModal(true)}
                 />
-
                 <Wheel
                   onResult={onSpinResult}
                   disabled={quizOpen}
