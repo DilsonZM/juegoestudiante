@@ -21,6 +21,8 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
   const [isHolding, setIsHolding] = useState(false)
   const [showFlames, setShowFlames] = useState(false)
   const [powerProgress, setPowerProgress] = useState(0) // 0..1 progreso visual de la barra de fuerza
+  const [maxPower, setMaxPower] = useState(false) // alcanzó potencia completa
+  const [extraBurst, setExtraBurst] = useState(false) // para un segundo destello si max power
   const holdRef = useRef({ start: 0, handledClick: false })
   const holdVibeRef = useRef(null)
   const audioRef = useRef({ ctx: null, osc: null, gain: null })
@@ -141,6 +143,9 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     holdRef.current.start = Date.now()
     holdRef.current.handledClick = true // evitamos que el click nativo dispare además
     setIsHolding(true)
+  setMaxPower(false)
+  setExtraBurst(false)
+  setPowerProgress(0)
     try { if (navigator?.vibrate) navigator.vibrate(10) } catch { /* noop */ }
     // vibración periódica suave mientras sostienes
     try {
@@ -155,6 +160,10 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
       const clamped = Math.min(elapsed, HOLD_MAX_MS)
       const p = clamped / HOLD_MAX_MS
       setPowerProgress(p)
+      if (!maxPower && p >= 0.999) {
+        setMaxPower(true)
+        try { if (navigator?.vibrate) navigator.vibrate([30,40,30]) } catch { /* noop */ }
+      }
       powerRafRef.current = requestAnimationFrame(step)
     }
     powerRafRef.current = requestAnimationFrame(step)
@@ -185,6 +194,11 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     // mostrar anillo de "fuego" breve
     setShowFlames(true)
     setTimeout(() => setShowFlames(false), 900)
+    if (maxPower) {
+      // segundo destello retardado
+      setExtraBurst(true)
+      setTimeout(()=> setExtraBurst(false), 1100)
+    }
     spin(power)
     // limpiar barra
     setTimeout(()=>setPowerProgress(0), 400)
@@ -223,21 +237,24 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
       >
         {isHolding && (
           <>
-            {/* Barra de fuerza radial (progreso) */}
             <div
-              className="power-ring"
+              className={`power-ring ${maxPower ? 'power-max' : ''}`}
               aria-hidden
               style={{
                 background: powerGradient(powerProgress),
                 opacity: 0.85 + powerProgress*0.15,
-                boxShadow: `0 0 ${6 + powerProgress*10}px ${2 + powerProgress*4}px rgba(255,100,0,${0.25 + powerProgress*0.35})`
+                boxShadow: `0 0 ${6 + powerProgress*10}px ${2 + powerProgress*4}px rgba(${maxPower? '255,40,0' : '255,100,0'},${0.30 + powerProgress*0.45})`
               }}
             />
             <div className="hold-ring" aria-hidden />
+            {maxPower && <div className="power-max-halo" aria-hidden />}
           </>
         )}
         {showFlames && (
           <div className="flame-ring" aria-hidden />
+        )}
+        {extraBurst && (
+          <div className="flame-ring flame-ring-delay" aria-hidden />
         )}
         <div style={{
           position: 'absolute', left: '50%', top: -8, transform: 'translateX(-50%)',

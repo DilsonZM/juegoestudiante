@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.2.1 - 2025-08-21
+- Pulso visual al alcanzar potencia máxima (anillo late + halo).
+- Doble destello (segundo flame burst) al soltar con potencia completa.
+- Vibración distintiva al llegar al 100% de carga.
+
 ## 0.2.0 - 2025-08-21
 - Barra de fuerza radial alrededor de la ruleta (press & hold) con relleno progresivo.
 - Gradiente dinámico verde→amarillo→naranja→rojo con brillo tipo candela.

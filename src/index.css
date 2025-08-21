@@ -267,6 +267,24 @@ body{
   transition: background .08s linear;
   mix-blend-mode: plus-lighter;
 }
+.power-ring.power-max{ animation: powerMaxPulse .9s ease-in-out infinite; }
+@keyframes powerMaxPulse {
+  0% { transform: scale(1); filter: blur(3px) saturate(1.1); }
+  50% { transform: scale(1.03); filter: blur(4px) saturate(1.3); }
+  100% { transform: scale(1); filter: blur(3px) saturate(1.1); }
+}
+.power-max-halo{
+  position:absolute; inset:-14px; border-radius:50%; pointer-events:none; z-index:0;
+  background:radial-gradient(circle at 50% 50%, rgba(255,210,80,.55), rgba(255,80,0,0) 65%);
+  animation: powerHalo 1.2s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+@keyframes powerHalo {
+  0% { opacity:0.3; transform:scale(.96); }
+  50% { opacity:0.75; transform:scale(1.04); }
+  100% { opacity:0.3; transform:scale(.96); }
+}
+.flame-ring-delay{ animation-delay:.25s; }
 @keyframes holdRingSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
