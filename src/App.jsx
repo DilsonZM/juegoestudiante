@@ -285,9 +285,6 @@ export default function App(){
             <a href="https://campusvirtual.colombia.unir.net/my/" target="_blank" rel="noopener noreferrer" className="ga-badge">
               <img src={unirLogo} alt="UNIR" />
             </a>
-            <label style={{display:'inline-flex',alignItems:'center',gap:6,marginLeft:12,fontSize:12}}>
-              <input type="checkbox" checked={soundOn} onChange={e=>setSoundOn(e.target.checked)} /> Sonido
-            </label>
           </div>
         )}
       </header>
