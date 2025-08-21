@@ -161,14 +161,10 @@ export default function Leaderboard({ db, currentUser, myStats }){
           </thead>
           <tbody>
             {rows.map((r, idx)=> renderRow(r, idx+1))}
-            {isLogged && !userInTop && myRowData && (
+      {isLogged && !userInTop && myRowData && (
               <>
                 <tr><td colSpan={4} style={{padding:4}} /></tr>
-                {renderRow(
-                  myRowData,
-                  myRank ?? '—',
-                  { key: 'me', highlight: true }
-                )}
+        {renderRow(myRowData, myRank ?? '—', { key: 'me', highlight: true })}
               </>
             )}
           </tbody>

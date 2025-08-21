@@ -651,26 +651,30 @@ html, body { overflow-x: hidden; }
 }
 
 /* ===== Leaderboard: highlight y animaciones ===== */
-.lb-row-highlight {
-  background: rgba(251, 191, 36, 0.15) !important; /* amber-400 */
-  animation: lbFlash 1.6s ease-out;
+.lb-row-highlight,
+.lb-row-highlight > td {
+  background: rgba(251, 191, 36, 0.18) !important; /* amber-400 */
+  animation: lbFlash 1.6s ease-out both;
+  will-change: background-color;
 }
 .lb-text-pop {
   display: inline-block;
-  animation: lbPop 0.35s ease-out;
+  animation: lbPop 0.45s ease-out both;
+  will-change: transform, color, text-shadow;
+  transform-origin: left center;
 }
 .lb-rise {
   animation: lbRise 0.6s ease-out;
 }
 @keyframes lbFlash {
-  0% { background: rgba(251, 191, 36, 0.35); }
-  50% { background: rgba(251, 191, 36, 0.18); }
+  0% { background: rgba(251, 191, 36, 0.42); }
+  40% { background: rgba(251, 191, 36, 0.26); }
   100% { background: transparent; }
 }
 @keyframes lbPop {
-  0% { transform: scale(1); color: #fde68a; }
-  40% { transform: scale(1.14); color: #fbbf24; }
-  100% { transform: scale(1); color: inherit; }
+  0% { transform: scale(1); color: #fde68a; text-shadow: 0 0 0 rgba(251,191,36,0); }
+  30% { transform: scale(1.18); color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,.55); }
+  100% { transform: scale(1); color: inherit; text-shadow: 0 0 0 rgba(0,0,0,0); }
 }
 @keyframes lbRise {
   0% { transform: translateY(6px); }
