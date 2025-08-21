@@ -134,7 +134,8 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
     try {
       if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current)
       holdTimeoutRef.current = setTimeout(() => {
-        if (isHolding && !spinning && !disabled) { endHoldAndSpin() }
+        // No uses estado capturado: verifica si el hold sigue activo con el ref
+        if (holdRef.current.start) { endHoldAndSpin() }
       }, HOLD_MAX_MS + 30)
     } catch { /* noop */ }
   }
