@@ -37,6 +37,27 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
     try {
       if (isAndroid) {
         const intentUrl = `intent://${window.location.host}${window.location.pathname}${window.location.search}#Intent;scheme=${prot};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(cleanUrl)};end`
+        // Copia el enlace primero para que el usuario pueda pegarlo en Chrome si el intento es bloqueado
+        try { await navigator.clipboard.writeText(cleanUrl) } catch (e) { void e }
+        // Programa un fallback: si seguimos visibles después de intentar abrir intent://, muestra instrucciones
+        setTimeout(() => {
+          if (document.visibilityState === 'visible') {
+            Swal.fire({
+              icon: 'info',
+              title: 'No se pudo abrir automáticamente',
+              html: `<div style="text-align:left">`+
+                    `<p>LinkedIn puede bloquear la salida directa.</p>`+
+                    `<p>El enlace ya fue <b>copiado</b>. Abre <b>Chrome</b> y pégalo en la barra de direcciones.</p>`+
+                    `<p>O toca el menú (⋯) y elige <b>"Abrir en navegador"</b>.</p>`+
+                    `</div>`,
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#1dd1c6',
+              background: '#131a3a',
+              color: '#e8ecf4'
+            })
+          }
+        }, 1200)
+        // Intento con intent://
         // Crear un enlace y hacer click programático puede funcionar mejor que location.href
         const a = document.createElement('a')
         a.href = intentUrl
@@ -201,11 +222,11 @@ export default function AuthPanel({ auth, db, onReady, onStartAuth }) {
               onClick={openInExternal}
               style={{ border:'1px solid #3f3f46', background:'#18181b', color:'#fafafa', borderRadius:10, padding:'8px 10px' }}
             >Abrir en navegador</button>
-            {inAppInfo.isInApp && inAppInfo.isAndroid && (
+            {inAppInfo.isInApp && (
               <a
-                href={`intent://${typeof window!=='undefined' ? window.location.host : ''}${typeof window!=='undefined' ? window.location.pathname : ''}${typeof window!=='undefined' ? window.location.search : ''}#Intent;scheme=${typeof window!=='undefined' ? window.location.protocol.replace(':','') : 'https'};package=com.android.chrome;S.browser_fallback_url=${typeof window!=='undefined' ? encodeURIComponent(window.location.href.split('#')[0]) : ''};end`}
+                href={typeof window!=='undefined' ? window.location.href.split('#')[0] : '#'}
                 style={{ fontSize:12, color:'#fbbf24', marginLeft:8 }}
-              >Enlace directo (Android)</a>
+              >Enlace directo</a>
             )}
             <button
               type="button"
