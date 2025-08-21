@@ -1,29 +1,20 @@
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect } from 'firebase/auth'
 import { showErrorSwal } from '../swal'
 import { getFirebaseErrorMsg } from '../firebaseErrorMap'
-import { isInAppBrowser } from '../utils/inAppBrowser'
 
 const googleProvider = new GoogleAuthProvider()
 // Evitar múltiples llamadas simultáneas
 let googleLoginInFlight = false
+// Config clásico: pedir email y perfil básico (scope por defecto). Se puede forzar select_account.
+googleProvider.setCustomParameters?.({ prompt: 'select_account' })
 
 export async function loginWithGoogle(auth) {
   try {
   if (googleLoginInFlight) return
   googleLoginInFlight = true
-  const host = (typeof window !== 'undefined' && window.location.hostname) || ''
-  const isLocal = ['localhost','127.0.0.1','::1'].includes(host)
-  // Siempre redirect fuera de localhost para evitar warnings COOP (Chrome) de window.closed en popups
-  // y para minimizar bloqueos de terceros / ITP en Safari / WebViews.
-  const forceRedirect = !isLocal
-    // En navegadores in-app o producción => redirect.
-  if (isInAppBrowser() || forceRedirect) {
-      try { sessionStorage.setItem('wantSplashLogin','1') } catch { /* ignore */ }
-      await signInWithRedirect(auth, googleProvider)
-      return
-    }
-    // Solo modo dev local intenta popup (más cómodo durante desarrollo)
-    await signInWithPopup(auth, googleProvider)
+  // Estrategia nativa estándar: intentar popup primero; si es bloqueado => fallback redirect.
+  // Esto evita loops de redirect en algunos contextos y mantiene UX "de fábrica".
+  await signInWithPopup(auth, googleProvider)
   } catch (e) {
     if (
       e.code === 'auth/popup-blocked' ||

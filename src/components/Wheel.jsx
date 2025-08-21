@@ -58,8 +58,7 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
   if (power === 0 && !holdUsedRef.current && normalTapCountRef.current === 1) {
         try {
           if (!localStorage.getItem('powerHintV3Shown')) {
-            setShowTapHint(true)
-            setTimeout(()=> setShowTapHint(false), 6000)
+    setShowTapHint(true)
             localStorage.setItem('powerHintV3Shown','1')
           }
         } catch { /* noop */ }
@@ -333,8 +332,18 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
         {spinning ? 'Girando…' : '🎡 ¡Girar ruleta!'}
       </button>
       {showTapHint && (
-        <div className="power-hint-badge power-hint-fire" aria-live="polite" role="status">
-          🔥🔥 ¡Mantén presionado para TURBO! 🔥🔥
+        <div className="turbo-hint-overlay" role="dialog" aria-modal="true" aria-label="Cómo activar turbo">
+          <div className="turbo-hint-box">
+            <div className="turbo-hint-fire-bg" aria-hidden></div>
+            <h3>🔥 CARGA EL TURBO 🔥</h3>
+            <p>Mantén presionado sobre la ruleta o el botón para acumular potencia y obtener MÁS VUELTAS. Suelta para un estallido de fuego.</p>
+            <ul>
+              <li>Hasta +6 vueltas extra</li>
+              <li>Vibración y efecto de fuego</li>
+              <li>Pulso al 100% de carga</li>
+            </ul>
+            <button type="button" className="turbo-hint-close" onClick={()=>setShowTapHint(false)}>¡Entendido!</button>
+          </div>
         </div>
       )}
     </div>

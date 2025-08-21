@@ -316,6 +316,53 @@ body{
   box-shadow:0 0 0 1px rgba(255,90,0,.35),0 0 24px -4px rgba(255,70,0,.6),0 0 46px -6px rgba(255,30,0,.4);
 }
 @keyframes hintFirePulse { 0%,100%{ filter:brightness(1) saturate(1.1)} 50%{ filter:brightness(1.45) saturate(1.4)} }
+
+/* ===== Modal de hint TURBO ===== */
+.turbo-hint-overlay{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle at 50% 50%, rgba(10,10,15,.92), rgba(5,5,8,.85));
+  backdrop-filter: blur(6px);
+  z-index:9999;
+  animation: turboOverlayFade .4s ease;
+}
+@keyframes turboOverlayFade{ from{opacity:0} to{opacity:1} }
+.turbo-hint-box{
+  position:relative; width:min(420px,90vw); padding:28px 22px 24px;
+  background:linear-gradient(145deg,#12161e 0%,#151d29 50%,#10131a 100%);
+  border:1px solid rgba(255,130,0,.35);
+  border-radius:22px; box-shadow:0 10px 40px -8px rgba(0,0,0,.7),0 0 0 1px rgba(255,90,0,.3);
+  overflow:hidden; color:#f1f5f9; font-size:14px;
+  animation: turboHintPop .55s cubic-bezier(.2,.85,.25,1);
+}
+@keyframes turboHintPop{0%{transform:scale(.7) rotate(-4deg);opacity:0}55%{transform:scale(1.04) rotate(1deg);opacity:1}100%{transform:scale(1) rotate(0)} }
+.turbo-hint-box h3{margin:0 0 10px;font-size:20px;letter-spacing:.5px;text-align:center;text-shadow:0 0 8px rgba(255,120,0,.6),0 0 20px rgba(255,60,0,.4)}
+.turbo-hint-box p{margin:0 0 12px; line-height:1.4;}
+.turbo-hint-box ul{margin:0 0 16px 18px; padding:0;}
+.turbo-hint-box li{margin:4px 0;}
+.turbo-hint-close{
+  display:block; width:100%; border:0; cursor:pointer; font-weight:800; letter-spacing:.5px;
+  padding:12px 18px; border-radius:14px; font-size:15px;
+  background:linear-gradient(90deg,#ff7b00,#ff3d00 60%,#ff0055);
+  color:#fff; box-shadow:0 6px 22px -6px rgba(255,70,0,.55),0 0 0 1px rgba(255,80,0,.4);
+  text-shadow:0 1px 2px rgba(0,0,0,.45);
+  position:relative; overflow:hidden;
+}
+.turbo-hint-close:active{transform:translateY(1px)}
+.turbo-hint-close::before, .turbo-hint-close::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+}
+.turbo-hint-close::before{background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.35),rgba(255,255,255,0) 70%); mix-blend-mode:overlay; opacity:.7;}
+.turbo-hint-close::after{background:linear-gradient(120deg,rgba(255,255,255,.25),rgba(255,255,255,0) 40%); mix-blend-mode:overlay;}
+.turbo-hint-fire-bg{
+  position:absolute; inset:0; background:
+    radial-gradient(circle at 50% 110%, rgba(255,60,0,.25), transparent 70%),
+    radial-gradient(circle at 80% -10%, rgba(255,120,0,.35), transparent 70%),
+    linear-gradient(180deg, rgba(255,120,0,.15), rgba(255,40,0,.06));
+  filter:blur(6px) saturate(1.2);
+  animation: turboFireWave 4s linear infinite;
+  opacity:.9;
+}
+@keyframes turboFireWave { 0%{transform:scale(1) rotate(0deg);} 50%{transform:scale(1.05) rotate(180deg);} 100%{transform:scale(1) rotate(360deg);} }
 @keyframes hintPop { 0%{ transform:scale(.6); opacity:0 } 60%{ transform:scale(1.05); opacity:1 } 100%{ transform:scale(1); opacity:1 } }
 @keyframes hintPulse { 0%,100%{ filter:brightness(1) saturate(1)} 50%{ filter:brightness(1.32) saturate(1.25)} }
 @keyframes hintFlare { 0%{ box-shadow:0 4px 14px -4px rgba(0,0,0,.55),0 0 0 1px rgba(255,140,0,.20),0 0 12px -2px rgba(255,120,0,.5),0 0 22px -4px rgba(255,60,0,.35)} 40%{ box-shadow:0 4px 18px -4px rgba(0,0,0,.55),0 0 0 1px rgba(255,180,0,.28),0 0 18px -2px rgba(255,150,0,.65),0 0 30px -4px rgba(255,90,0,.45)} 70%{ box-shadow:0 4px 14px -4px rgba(0,0,0,.55),0 0 0 1px rgba(255,140,0,.24),0 0 10px -2px rgba(255,120,0,.45),0 0 20px -4px rgba(255,60,0,.32)} 100%{ box-shadow:0 4px 14px -4px rgba(0,0,0,.55),0 0 0 1px rgba(255,140,0,.20),0 0 12px -2px rgba(255,120,0,.5),0 0 22px -4px rgba(255,60,0,.35)} }
