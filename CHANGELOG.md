@@ -19,6 +19,10 @@
 - Rediseño del hint TURBO: burbuja minimal (gradiente rojo→verde) sin fuego, entrada "bubble" y menor distracción.
 - Removidos assets/animaciones de fuego del hint para reducir ruido visual.
 
+## 0.2.10 - 2025-08-21
+- Hint TURBO ahora como toast flotante estilo sci‑fi (no oscurece fondo, auto 3s, gradiente translúcido azul) mensaje: "Mantén presionado para MODO POWER".
+- Simplificación de CSS: se retiran capas glow/fuego previas; menor distracción visual.
+
 ## 0.2.4 - 2025-08-21
 - Ajuste final Auth Google: redirect universal (excepto localhost) para suprimir warnings COOP y mejorar compatibilidad WebView.
 
