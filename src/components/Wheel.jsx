@@ -336,7 +336,9 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
       </button>
       {showTapHint && (
         <div className="turbo-hint-center" role="status" aria-live="assertive">
-          <span className="thc-text">MANTÉN PRESIONADO PARA POWER</span>
+          <div className="thc-box">
+            <span className="thc-text">MANTÉN PRESIONADO PARA POWER</span>
+          </div>
         </div>
       )}
     </div>
