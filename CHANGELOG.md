@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.2.11 - 2025-08-21
+- Hint TURBO centrado estilo "diablo" (gradiente rojo→naranja→ámbar, texto palpitando) colocado en el centro de la ruleta.
+- Sustituye toast sci‑fi anterior; mantiene auto-ocultado a los 3s.
+
 ## 0.2.6 - 2025-08-21
 - Hint TURBO: aparece ahora al iniciar el 2º giro normal (antes 3º) para enseñar más rápido el press & hold.
 - Mensaje reforzado con efecto fuego (clase `power-hint-fire`) y animaciones adicionales.
