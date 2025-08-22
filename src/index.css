@@ -359,6 +359,23 @@ body{
   pointer-events:none; user-select:none;
   overflow:hidden;
 }
+/* === Hint centrado estilo diablo naranja === */
+.turbo-hint-center{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;
+  animation: thcFade .3s ease-out;
+}
+@keyframes thcFade { from{opacity:0; transform:scale(.7)} 60%{opacity:1; transform:scale(1.08)} to{opacity:1; transform:scale(1)} }
+.turbo-hint-center .thc-text{
+  font-size: clamp(14px, 4.2vw, 22px);
+  font-weight:800;
+  letter-spacing:1px;
+  background:linear-gradient(90deg,#3b0500,#7a1200 20%,#ff5100 45%,#ffa800 65%,#ff5100 82%,#3b0500 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 0 6px rgba(255,90,0,.55)) drop-shadow(0 0 18px rgba(255,60,0,.35));
+  position:relative; padding:10px 24px; text-align:center;
+  animation: thcPulse 1.4s ease-in-out infinite;
+}
+@keyframes thcPulse { 0%,100%{transform:scale(1)} 40%{transform:scale(1.08)} 55%{transform:scale(1.03)} 70%{transform:scale(1.09)} }
 .turbo-hint-toast::before{content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(120,200,255,.08),rgba(120,200,255,0) 40%); mix-blend-mode:overlay;}
 .turbo-hint-toast::after{content:""; position:absolute; right:-18px; top:0; bottom:0; width:68px; background:linear-gradient(135deg, rgba(120,200,255,.15), rgba(120,200,255,0)); transform:skewX(-25deg); opacity:.6;}
 @keyframes toastIn {0%{transform:translate(-50%,18px) scale(.85); opacity:0; filter:blur(6px)}60%{transform:translate(-50%,-4px) scale(1.04); opacity:1; filter:blur(0)}100%{transform:translate(-50%,0) scale(1);} }
