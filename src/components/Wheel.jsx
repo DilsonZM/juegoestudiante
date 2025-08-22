@@ -335,13 +335,7 @@ export default function Wheel({ onResult, disabled, onBeforeFirstSpin, soundOn =
         {spinning ? 'Girando…' : '🎡 ¡Girar ruleta!'}
       </button>
       {showTapHint && (
-        <div className="turbo-hint-overlay" role="alert" aria-live="assertive">
-          <div className="turbo-hint-box turbo-bubble">
-            <div className="turbo-hint-ring" aria-hidden></div>
-            <div className="turbo-hint-core" aria-hidden></div>
-            <div className="turbo-hint-text compact">MODO TURBO: mantén presionado</div>
-          </div>
-        </div>
+        <div className="turbo-hint-toast" role="status" aria-live="assertive">Mantén presionado para MODO POWER ⚡</div>
       )}
     </div>
   )
