@@ -15,6 +15,10 @@
 - Animaciones de llamas escalonadas + glow giratorio con gradiente cónico.
 - Limpieza: se eliminó lógica de timeout manual anterior y se centraliza ref para evitar fugas.
 
+## 0.2.9 - 2025-08-21
+- Rediseño del hint TURBO: burbuja minimal (gradiente rojo→verde) sin fuego, entrada "bubble" y menor distracción.
+- Removidos assets/animaciones de fuego del hint para reducir ruido visual.
+
 ## 0.2.4 - 2025-08-21
 - Ajuste final Auth Google: redirect universal (excepto localhost) para suprimir warnings COOP y mejorar compatibilidad WebView.
 
